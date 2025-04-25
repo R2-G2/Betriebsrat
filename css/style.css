@@ -77,6 +77,48 @@ footer {
     opacity: 0.8;
 }
 
+/* Controls */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.theme-control {
+    flex: 0 0 auto;
+}
+
+.topic-form {
+    flex: 1;
+    display: flex;
+    gap: 0.8rem;
+}
+
+.topic-form input {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+.dark-theme .topic-form input {
+    border-color: #444;
+}
+
+.topic-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.topic-form button {
+    margin-top: 0;
+}
+
 /* Meeting Animation Styles */
 #meeting-animation {
     width: 100%;
@@ -115,6 +157,22 @@ footer {
     border-color: white transparent;
 }
 
+/* Notification */
+.notification {
+    padding: 0.5rem 1rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+    color: white;
+    background-color: var(--secondary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    text-align: center;
+}
+
+.notification.show {
+    opacity: 1;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .container {
@@ -128,5 +186,14 @@ footer {
     
     #meeting-animation {
         height: 300px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .topic-form {
+        flex-direction: column;
     }
 } 

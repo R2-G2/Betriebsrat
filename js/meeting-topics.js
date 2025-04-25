@@ -35,4 +35,29 @@ const meetingTopics = [
   "Change Management",
   "Burnout-Prophylaxe",
   "Diversity-Quote"
-]; 
+];
+
+// Function to add a new topic to the list
+function addMeetingTopic(newTopic) {
+  // Trim the input and convert to title case
+  newTopic = newTopic.trim();
+  
+  // Check if the topic already exists (case insensitive)
+  if (newTopic === "") {
+    return { success: false, message: "Bitte geben Sie ein Thema ein." };
+  }
+  
+  const topicExists = meetingTopics.some(topic => 
+    topic.toLowerCase() === newTopic.toLowerCase()
+  );
+  
+  if (topicExists) {
+    return { success: false, message: "Dieses Thema existiert bereits." };
+  }
+  
+  // Add the new topic to the array
+  meetingTopics.push(newTopic);
+  
+  // Return success message
+  return { success: true, message: "Thema erfolgreich hinzugefügt!" };
+} 
