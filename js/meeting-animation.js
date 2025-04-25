@@ -12,8 +12,8 @@ let speechBubbles = [];
 const ROOM_COLOR = "#E6E6FA";
 const TABLE_COLOR = "#8B4513";
 const CHAIR_COLOR = "#A0522D";
-const PARTICIPANT_COLORS = ["#FFB6C1", "#ADD8E6", "#90EE90", "#FFFFE0", "#D8BFD8"];
-const PARTICIPANT_COUNT = 6;
+const PARTICIPANT_COLORS = ["#FFB6C1", "#ADD8E6", "#90EE90", "#FFFFE0", "#D8BFD8", "#FFA07A", "#87CEEB", "#98FB98"];
+const PARTICIPANT_COUNT = 10;
 const SPEECH_BUBBLE_DURATION = 3000; // milliseconds
 const SPEECH_CHANCE = 0.01; // probability per frame that a participant speaks
 
@@ -59,11 +59,27 @@ function createChairs() {
     let y = table.y + table.height * 0.7;
     chairs.push({ x, y, width: 40, height: 40 });
   }
+  
+  // Left side of table
+  for (let i = 0; i < 2; i++) {
+    let x = table.x - table.width * 0.7;
+    let y = table.y - table.height * 0.2 + i * table.height * 0.4;
+    chairs.push({ x, y, width: 40, height: 40 });
+  }
+  
+  // Right side of table
+  for (let i = 0; i < 2; i++) {
+    let x = table.x + table.width * 0.7;
+    let y = table.y - table.height * 0.2 + i * table.height * 0.4;
+    chairs.push({ x, y, width: 40, height: 40 });
+  }
 }
 
 // Create participants and position them on chairs
 function createParticipants() {
   for (let i = 0; i < PARTICIPANT_COUNT; i++) {
+    if (i >= chairs.length) break; // Don't create more participants than chairs
+    
     let chair = chairs[i];
     let colorIndex = i % PARTICIPANT_COLORS.length;
     
