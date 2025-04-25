@@ -1,0 +1,9 @@
+This directory is for project assets like images, fonts, and other media files.
+
+You can place:
+- Images (.jpg, .png, .svg, etc.)
+- Font files (.woff, .woff2, etc.)
+- Icons
+- Other media assets
+
+The directory structure is kept in version control with this placeholder. 
