@@ -18,7 +18,28 @@ let meetingTopics = [
   "Neue Software",
   "Überstundenregelung",
   "Raumtemperatur",
-  "Diensthandy"
+  "Diensthandy",
+  "KI-basierte Überwachung",
+  "Agilität im Büro",
+  "Digitale Transformation",
+  "Work-Life-Balance",
+  "New Work Konzept",
+  "Employer Branding",
+  "Lean Management",
+  "Remote Work Policy",
+  "Mitarbeiter-Tracking",
+  "Outsourcing-Strategie",
+  "Corporate Identity",
+  "Holokratisches Arbeiten",
+  "Silicon Valley Methodik",
+  "Standortschließung",
+  "Umstrukturierung",
+  "Effizienzsteigerung",
+  "Datenbasierte Leistungsmessung",
+  "Hiring & Firing",
+  "Change Management",
+  "Burnout-Prophylaxe",
+  "Diversity-Quote"
 ];
 
 let participantPhrases = [
@@ -33,7 +54,31 @@ let participantPhrases = [
   "Laut Paragraph...",
   "Wir sollten das vertagen.",
   "Dazu gibt es eine Umfrage.",
-  "Das protokollieren wir."
+  "Das protokollieren wir.",
+  "Wir müssen agil reagieren!",
+  "Lassen Sie uns das disruptiv angehen.",
+  "Die Zahlen sprechen für sich.",
+  "Als Digital Native sehe ich das...",
+  "Let's think outside the box!",
+  "Haben wir dafür die Ressourcen?",
+  "Wir brauchen mehr Synergien.",
+  "Das ist nicht DSGVO-konform!",
+  "Bei der Konkurrenz macht man das anders.",
+  "Wo ist der Business Case?",
+  "Was sagt der Compliance Officer?",
+  "Lasst uns das im Deep Dive analysieren.",
+  "Hier fehlt der Proof of Concept.",
+  "Können wir das skalieren?",
+  "Das ist nicht Teil der Roadmap!",
+  "Einfach mal machen statt quatschen.",
+  "Wir müssen den Stakeholdern zuhören.",
+  "Ist das im Budget eingeplant?",
+  "Das steht nicht in meiner OKR-Liste.",
+  "Gibt es dafür eine Best Practice?",
+  "Wir brauchen einen Paradigmenwechsel.",
+  "Die KPIs sprechen dagegen.",
+  "Ist das überhaupt nachhaltig?",
+  "Das müssen wir noch mal benchmarken."
 ];
 
 // Config constants
