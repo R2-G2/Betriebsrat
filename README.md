@@ -13,7 +13,7 @@ A lightweight web project that runs locally without requiring a web server. Buil
 
 ## Project Rules
 
-Project rules are defined in the `.cursor/rules` file. All development follows the AI-assisted workflow defined there.
+Project rules are defined in the [documentation](docs/index.md). All development follows the AI-assisted workflow defined there.
 
 ## Project Structure
 
@@ -24,7 +24,13 @@ project/
 │   └── style.css      # Main stylesheet
 ├── js/
 │   └── main.js        # JavaScript functionality
-└── assets/            # For images, fonts, etc.
+├── assets/            # For images, fonts, etc.
+└── docs/              # Project documentation
+    ├── index.md       # Documentation home
+    ├── development-rules.md
+    ├── workflow.md
+    ├── interaction-rules.md
+    └── best-practices.md
 ```
 
 ## How to Use
