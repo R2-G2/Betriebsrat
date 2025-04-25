@@ -6,8 +6,7 @@ let participants = [];
 let table;
 let chairs = [];
 let speechBubbles = [];
-let meetingTopics = [];
-let participantPhrases = [];
+// meetingTopics and participantPhrases are loaded from external JS files
 
 // Config constants
 const ROOM_COLOR = "#E6E6FA";
@@ -17,17 +16,6 @@ const PARTICIPANT_COLORS = ["#FFB6C1", "#ADD8E6", "#90EE90", "#FFFFE0", "#D8BFD8
 const PARTICIPANT_COUNT = 6;
 const SPEECH_BUBBLE_DURATION = 3000; // milliseconds
 const SPEECH_CHANCE = 0.01; // probability per frame that a participant speaks
-
-// Preload function to load JSON data
-function preload() {
-  // Load topics and phrases from external JSON files
-  loadJSON('js/meeting-topics.json', function(data) {
-    meetingTopics = data;
-  });
-  loadJSON('js/meeting-phrases.json', function(data) {
-    participantPhrases = data;
-  });
-}
 
 // Main p5.js setup function
 function setup() {
@@ -185,9 +173,9 @@ function createSpeechBubble(participantIndex) {
   const isDiscussingTopic = random() > 0.5;
   
   let content;
-  if (isDiscussingTopic && meetingTopics.length > 0) {
+  if (isDiscussingTopic && typeof meetingTopics !== 'undefined' && meetingTopics.length > 0) {
     content = meetingTopics[Math.floor(random(meetingTopics.length))];
-  } else if (participantPhrases.length > 0) {
+  } else if (typeof participantPhrases !== 'undefined' && participantPhrases.length > 0) {
     content = participantPhrases[Math.floor(random(participantPhrases.length))];
   } else {
     content = "Keine Daten geladen...";

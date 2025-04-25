@@ -25,8 +25,8 @@ project/
 ├── js/
 │   ├── main.js        # JavaScript functionality
 │   ├── meeting-animation.js  # Animation logic
-│   ├── meeting-topics.json   # Configurable meeting topics
-│   └── meeting-phrases.json  # Configurable participant phrases
+│   ├── meeting-topics.js     # Configurable meeting topics
+│   └── meeting-phrases.js    # Configurable participant phrases
 ├── assets/            # For images, fonts, etc.
 └── docs/              # Project documentation
     ├── index.md       # Documentation home
@@ -45,12 +45,12 @@ project/
 
 ## Customization
 
-You can customize the meeting animation by editing the JSON files:
+You can customize the meeting animation by editing the JavaScript data files:
 
-- `js/meeting-topics.json` - Contains the topics discussed in the meeting
-- `js/meeting-phrases.json` - Contains the phrases spoken by participants
+- `js/meeting-topics.js` - Contains the topics discussed in the meeting
+- `js/meeting-phrases.js` - Contains the phrases spoken by participants
 
-These files can be modified manually to add, remove, or change the content displayed in the animation.
+These files can be modified manually to add, remove, or change the content displayed in the animation without facing CORS restrictions when running locally.
 
 ## Browser Compatibility
 

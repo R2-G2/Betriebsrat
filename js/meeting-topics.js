@@ -1,4 +1,7 @@
-[
+// Meeting topics for the workers' council animation
+// Edit this file to customize the topics discussed in the meeting
+
+const meetingTopics = [
   "Neue Arbeitszeiten",
   "Urlaubsanträge",
   "Kantinenangebot",
@@ -32,4 +35,4 @@
   "Change Management",
   "Burnout-Prophylaxe",
   "Diversity-Quote"
-] 
+]; 

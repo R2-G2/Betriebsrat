@@ -1,4 +1,7 @@
-[
+// Participant phrases for the workers' council animation
+// Edit this file to customize the phrases spoken by participants
+
+const participantPhrases = [
   "Das sehe ich anders...",
   "Können wir abstimmen?",
   "Da bin ich dafür!",
@@ -35,4 +38,4 @@
   "Die KPIs sprechen dagegen.",
   "Ist das überhaupt nachhaltig?",
   "Das müssen wir noch mal benchmarken."
-] 
+]; 
