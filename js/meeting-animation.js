@@ -6,80 +6,8 @@ let participants = [];
 let table;
 let chairs = [];
 let speechBubbles = [];
-let meetingTopics = [
-  "Neue Arbeitszeiten",
-  "Urlaubsanträge",
-  "Kantinenangebot",
-  "Betriebsausflug",
-  "Parkplätze",
-  "Weiterbildung",
-  "Homeoffice-Regelung",
-  "Gesundheitsförderung",
-  "Neue Software",
-  "Überstundenregelung",
-  "Raumtemperatur",
-  "Diensthandy",
-  "KI-basierte Überwachung",
-  "Agilität im Büro",
-  "Digitale Transformation",
-  "Work-Life-Balance",
-  "New Work Konzept",
-  "Employer Branding",
-  "Lean Management",
-  "Remote Work Policy",
-  "Mitarbeiter-Tracking",
-  "Outsourcing-Strategie",
-  "Corporate Identity",
-  "Holokratisches Arbeiten",
-  "Silicon Valley Methodik",
-  "Standortschließung",
-  "Umstrukturierung",
-  "Effizienzsteigerung",
-  "Datenbasierte Leistungsmessung",
-  "Hiring & Firing",
-  "Change Management",
-  "Burnout-Prophylaxe",
-  "Diversity-Quote"
-];
-
-let participantPhrases = [
-  "Das sehe ich anders...",
-  "Können wir abstimmen?",
-  "Da bin ich dafür!",
-  "Ich habe einen Vorschlag.",
-  "Das müssen wir klären.",
-  "Wie ist die Rechtslage?",
-  "Das ist im Interesse der Mitarbeiter.",
-  "Die Geschäftsführung sagt...",
-  "Laut Paragraph...",
-  "Wir sollten das vertagen.",
-  "Dazu gibt es eine Umfrage.",
-  "Das protokollieren wir.",
-  "Wir müssen agil reagieren!",
-  "Lassen Sie uns das disruptiv angehen.",
-  "Die Zahlen sprechen für sich.",
-  "Als Digital Native sehe ich das...",
-  "Let's think outside the box!",
-  "Haben wir dafür die Ressourcen?",
-  "Wir brauchen mehr Synergien.",
-  "Das ist nicht DSGVO-konform!",
-  "Bei der Konkurrenz macht man das anders.",
-  "Wo ist der Business Case?",
-  "Was sagt der Compliance Officer?",
-  "Lasst uns das im Deep Dive analysieren.",
-  "Hier fehlt der Proof of Concept.",
-  "Können wir das skalieren?",
-  "Das ist nicht Teil der Roadmap!",
-  "Einfach mal machen statt quatschen.",
-  "Wir müssen den Stakeholdern zuhören.",
-  "Ist das im Budget eingeplant?",
-  "Das steht nicht in meiner OKR-Liste.",
-  "Gibt es dafür eine Best Practice?",
-  "Wir brauchen einen Paradigmenwechsel.",
-  "Die KPIs sprechen dagegen.",
-  "Ist das überhaupt nachhaltig?",
-  "Das müssen wir noch mal benchmarken."
-];
+let meetingTopics = [];
+let participantPhrases = [];
 
 // Config constants
 const ROOM_COLOR = "#E6E6FA";
@@ -89,6 +17,17 @@ const PARTICIPANT_COLORS = ["#FFB6C1", "#ADD8E6", "#90EE90", "#FFFFE0", "#D8BFD8
 const PARTICIPANT_COUNT = 6;
 const SPEECH_BUBBLE_DURATION = 3000; // milliseconds
 const SPEECH_CHANCE = 0.01; // probability per frame that a participant speaks
+
+// Preload function to load JSON data
+function preload() {
+  // Load topics and phrases from external JSON files
+  loadJSON('js/meeting-topics.json', function(data) {
+    meetingTopics = data;
+  });
+  loadJSON('js/meeting-phrases.json', function(data) {
+    participantPhrases = data;
+  });
+}
 
 // Main p5.js setup function
 function setup() {
@@ -246,10 +185,12 @@ function createSpeechBubble(participantIndex) {
   const isDiscussingTopic = random() > 0.5;
   
   let content;
-  if (isDiscussingTopic) {
+  if (isDiscussingTopic && meetingTopics.length > 0) {
     content = meetingTopics[Math.floor(random(meetingTopics.length))];
-  } else {
+  } else if (participantPhrases.length > 0) {
     content = participantPhrases[Math.floor(random(participantPhrases.length))];
+  } else {
+    content = "Keine Daten geladen...";
   }
   
   speechBubbles.push({

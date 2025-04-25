@@ -23,7 +23,10 @@ project/
 ├── css/
 │   └── style.css      # Main stylesheet
 ├── js/
-│   └── main.js        # JavaScript functionality
+│   ├── main.js        # JavaScript functionality
+│   ├── meeting-animation.js  # Animation logic
+│   ├── meeting-topics.json   # Configurable meeting topics
+│   └── meeting-phrases.json  # Configurable participant phrases
 ├── assets/            # For images, fonts, etc.
 └── docs/              # Project documentation
     ├── index.md       # Documentation home
@@ -39,6 +42,15 @@ project/
 2. No installation or server setup required
 3. Click the theme button to toggle between light and dark mode
 4. Your theme preference will be saved between sessions
+
+## Customization
+
+You can customize the meeting animation by editing the JSON files:
+
+- `js/meeting-topics.json` - Contains the topics discussed in the meeting
+- `js/meeting-phrases.json` - Contains the phrases spoken by participants
+
+These files can be modified manually to add, remove, or change the content displayed in the animation.
 
 ## Browser Compatibility
 
