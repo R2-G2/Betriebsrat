@@ -37,6 +37,9 @@ const meetingTopics = [
   "Diversity-Quote"
 ];
 
+// Custom event to signal that a new topic has been added
+const TOPIC_ADDED_EVENT = 'topicAdded';
+
 // Function to add a new topic to the list
 function addMeetingTopic(newTopic) {
   // Trim the input and convert to title case
@@ -57,6 +60,19 @@ function addMeetingTopic(newTopic) {
   
   // Add the new topic to the array
   meetingTopics.push(newTopic);
+  
+  // Dispatch an event to notify the system about the new topic
+  if (typeof document !== 'undefined') {
+    const event = new CustomEvent(TOPIC_ADDED_EVENT, { 
+      detail: { topic: newTopic } 
+    });
+    document.dispatchEvent(event);
+    
+    // Force immediate display of the new topic by creating a temporary speech bubble
+    if (typeof createTemporarySpeechBubble === 'function') {
+      createTemporarySpeechBubble(newTopic);
+    }
+  }
   
   // Return success message
   return { success: true, message: "Thema erfolgreich hinzugefügt!" };

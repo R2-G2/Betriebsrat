@@ -16,6 +16,7 @@ const PARTICIPANT_COLORS = ["#FFB6C1", "#ADD8E6", "#90EE90", "#FFFFE0", "#D8BFD8
 const PARTICIPANT_COUNT = 10;
 const SPEECH_BUBBLE_DURATION = 3000; // milliseconds
 const SPEECH_CHANCE = 0.01; // probability per frame that a participant speaks
+const NEW_TOPIC_HIGHLIGHT_DURATION = 5000; // duration to highlight new topics
 
 // Main p5.js setup function
 function setup() {
@@ -42,6 +43,11 @@ function setup() {
   
   // Set frame rate
   frameRate(30);
+  
+  // Listen for new topic events
+  if (typeof document !== 'undefined' && typeof TOPIC_ADDED_EVENT !== 'undefined') {
+    document.addEventListener(TOPIC_ADDED_EVENT, handleNewTopic);
+  }
 }
 
 // Create chairs positioned around the meeting table
@@ -183,6 +189,41 @@ function drawParticipant(p) {
   pop();
 }
 
+// Handler for new topic events
+function handleNewTopic(event) {
+  if (event && event.detail && event.detail.topic) {
+    const randomParticipant = Math.floor(random(participants.length));
+    createTemporarySpeechBubble(event.detail.topic, randomParticipant);
+  }
+}
+
+// Create a temporary speech bubble to display new topic
+function createTemporarySpeechBubble(topic, participantIndex = null) {
+  // If no participant specified, choose random one
+  if (participantIndex === null) {
+    participantIndex = Math.floor(random(participants.length));
+  }
+  
+  // Make the participant speak the new topic
+  if (participantIndex >= 0 && participantIndex < participants.length) {
+    const p = participants[participantIndex];
+    
+    // Create speech bubble with the new topic and highlight flag
+    speechBubbles.push({
+      participantIndex,
+      x: p.x,
+      y: p.y - p.size - 30,
+      content: topic,
+      createdAt: millis(),
+      duration: NEW_TOPIC_HIGHLIGHT_DURATION, // Longer duration for new topics
+      isNewTopic: true // Flag to highlight new topics
+    });
+    
+    // Update the lastSpoke time for the participant
+    p.lastSpoke = millis();
+  }
+}
+
 // Create a new speech bubble for a participant
 function createSpeechBubble(participantIndex) {
   const p = participants[participantIndex];
@@ -203,7 +244,8 @@ function createSpeechBubble(participantIndex) {
     y: p.y - p.size - 30,
     content,
     createdAt: millis(),
-    duration: SPEECH_BUBBLE_DURATION
+    duration: SPEECH_BUBBLE_DURATION,
+    isNewTopic: false
   });
 }
 
@@ -237,9 +279,19 @@ function updateSpeechBubbles() {
     
     // Draw the speech bubble
     push();
-    fill(255, 255, 255, 255 * opacity);
-    stroke(0, 0, 0, 100 * opacity);
-    strokeWeight(1);
+    
+    // Special styling for new topics
+    if (bubble.isNewTopic) {
+      // Pulsating effect for new topics
+      const pulseAmount = sin(millis() * 0.01) * 0.2 + 0.8;
+      fill(255, 255, 200, 255 * opacity * pulseAmount); // Yellowish background
+      stroke(255, 200, 0, 150 * opacity); // Golden border
+      strokeWeight(2);
+    } else {
+      fill(255, 255, 255, 255 * opacity);
+      stroke(0, 0, 0, 100 * opacity);
+      strokeWeight(1);
+    }
     
     // Bubble
     ellipse(bubble.x, bubble.y, textWidth(bubble.content) + 20, 30);
