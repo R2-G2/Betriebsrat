@@ -152,12 +152,58 @@ function createWaitress() {
 function createTableDecorations() {
   tableDecorations = [];
   
-  // Create water bottles
+  // Create a grid system to prevent overlapping
+  const gridSize = 40; // Minimum distance between objects
+  const usedPositions = []; // Keep track of used positions
+  
+  // Helper function to check if a position is too close to existing items
+  function isPositionFree(x, y, minDistance) {
+    for (let pos of usedPositions) {
+      const distance = sqrt((pos.x - x) ** 2 + (pos.y - y) ** 2);
+      if (distance < minDistance) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  // Helper to get a free position within a region
+  function getFreePosition(centerX, centerY, regionWidth, regionHeight, minDistance) {
+    let x, y;
+    let attempts = 0;
+    const maxAttempts = 20;
+    
+    do {
+      x = centerX + random(-regionWidth/2, regionWidth/2);
+      y = centerY + random(-regionHeight/2, regionHeight/2);
+      attempts++;
+    } while (!isPositionFree(x, y, minDistance) && attempts < maxAttempts);
+    
+    // If we couldn't find a free spot after many attempts, 
+    // slightly adjust an existing position as last resort
+    if (attempts >= maxAttempts) {
+      x += random(-10, 10);
+      y += random(-10, 10);
+    }
+    
+    // Mark this position as used
+    usedPositions.push({x, y});
+    return {x, y};
+  }
+  
+  // Create water bottles - distribute them evenly along the top edge
+  const waterSpacing = table.width * 0.6 / 5;
   for (let i = 0; i < 5; i++) {
+    const baseX = table.x - table.width * 0.3 + i * waterSpacing;
+    const baseY = table.y - table.height * 0.2;
+    
+    // Get a position near the base position that doesn't overlap
+    const pos = getFreePosition(baseX, baseY, waterSpacing * 0.8, 20, gridSize * 0.7);
+    
     tableDecorations.push({
       type: 'water',
-      x: table.x - table.width * 0.3 + i * (table.width * 0.6 / 4),
-      y: table.y - table.height * 0.2,
+      x: pos.x,
+      y: pos.y,
       width: 15,
       height: 30,
       color: '#D6EAF8', // Light blue for water
@@ -167,11 +213,12 @@ function createTableDecorations() {
     });
   }
   
-  // Create fruit bowl
+  // Create fruit bowl - center of table
+  const fruitBowlPos = getFreePosition(table.x, table.y, 40, 40, gridSize);
   tableDecorations.push({
     type: 'fruitBowl',
-    x: table.x,
-    y: table.y,
+    x: fruitBowlPos.x,
+    y: fruitBowlPos.y,
     radius: 40,
     color: '#E59866', // Brown for bowl
     fruits: [],
@@ -190,14 +237,15 @@ function createTableDecorations() {
     });
   }
   
-  // Create cola cans
-  const colaPositions = [
+  // Create cola cans - distribute them along the bottom
+  const colaBasePositions = [
     { x: table.x - table.width * 0.25, y: table.y + table.height * 0.15 },
     { x: table.x + table.width * 0.25, y: table.y + table.height * 0.15 },
     { x: table.x, y: table.y - table.height * 0.2 }
   ];
   
-  for (let pos of colaPositions) {
+  for (let basePos of colaBasePositions) {
+    const pos = getFreePosition(basePos.x, basePos.y, 40, 30, gridSize * 0.6);
     tableDecorations.push({
       type: 'cola',
       x: pos.x,
@@ -211,12 +259,19 @@ function createTableDecorations() {
     });
   }
   
-  // Create coffee cups
-  for (let i = 0; i < 3; i++) {
+  // Create coffee cups - distribute them evenly
+  const coffeeBasePositions = [
+    { x: table.x - table.width * 0.3, y: table.y + table.height * 0.1 },
+    { x: table.x, y: table.y + table.height * 0.1 },
+    { x: table.x + table.width * 0.3, y: table.y + table.height * 0.1 }
+  ];
+  
+  for (let basePos of coffeeBasePositions) {
+    const pos = getFreePosition(basePos.x, basePos.y, 40, 30, gridSize * 0.6);
     tableDecorations.push({
       type: 'coffee',
-      x: table.x - table.width * 0.3 + i * table.width * 0.3,
-      y: table.y + table.height * 0.1,
+      x: pos.x,
+      y: pos.y,
       radius: 12,
       color: '#784212', // Brown for coffee
       steamPhase: random(TWO_PI),
@@ -225,17 +280,18 @@ function createTableDecorations() {
     });
   }
   
-  // Create multiple "Koks" (white lines) spots around the table
-  const koksPositions = [
-    { x: table.x + table.width * 0.2, y: table.y - table.height * 0.1 }, // Original position
-    { x: table.x - table.width * 0.2, y: table.y - table.height * 0.1 }, // Left side
+  // Create multiple "Koks" (white lines) spots around the table with better distribution
+  const koksBasePositions = [
+    { x: table.x + table.width * 0.2, y: table.y - table.height * 0.1 }, // Top right
+    { x: table.x - table.width * 0.2, y: table.y - table.height * 0.1 }, // Top left
     { x: table.x, y: table.y + table.height * 0.15 },                    // Bottom center
     { x: table.x + table.width * 0.3, y: table.y + table.height * 0.1 }, // Bottom right
     { x: table.x - table.width * 0.3, y: table.y + table.height * 0.1 }  // Bottom left
   ];
   
   // Create multiple Koks locations around the table
-  for (let pos of koksPositions) {
+  for (let basePos of koksBasePositions) {
+    const pos = getFreePosition(basePos.x, basePos.y, 40, 30, gridSize * 0.8);
     let koksItem = {
       type: 'koks',
       x: pos.x,
