@@ -185,6 +185,23 @@ function createTableDecorations() {
       steamPhase: random(TWO_PI)
     });
   }
+  
+  // Create "Koks" (white lines) in one corner of the table
+  tableDecorations.push({
+    type: 'koks',
+    x: table.x + table.width * 0.2,
+    y: table.y - table.height * 0.1,
+    lines: []
+  });
+  
+  // Add a few lines with slight variations
+  for (let i = 0; i < 3; i++) {
+    tableDecorations[tableDecorations.length - 1].lines.push({
+      length: random(15, 25),
+      angle: random(-0.1, 0.1),
+      offset: i * 8
+    });
+  }
 }
 
 // Main p5.js draw function - called every frame
@@ -249,6 +266,9 @@ function drawTableDecorations() {
         break;
       case 'coffee':
         drawCoffeeCup(deco);
+        break;
+      case 'koks':
+        drawKoksLines(deco);
         break;
     }
     
@@ -374,6 +394,41 @@ function drawCoffeeCup(cup) {
     }
     endShape();
   }
+  
+  pop();
+}
+
+// Draw the "Koks" lines
+function drawKoksLines(koks) {
+  push();
+  translate(koks.x, koks.y);
+  
+  // Small mirror or card surface
+  fill(200, 200, 200, 150);
+  noStroke();
+  rect(0, 0, 30, 20, 2);
+  
+  // White lines
+  stroke(255);
+  strokeWeight(2);
+  strokeCap(ROUND);
+  
+  for (let line of koks.lines) {
+    push();
+    translate(-10 + line.offset, 0);
+    rotate(line.angle);
+    line(0, -5, 0, -5 - line.length);
+    pop();
+  }
+  
+  // Credit card nearby
+  fill(70, 130, 180); // Steel blue
+  noStroke();
+  rect(20, 10, 15, 10, 1);
+  
+  // Card stripe
+  fill(50);
+  rect(20, 12, 15, 2);
   
   pop();
 }
