@@ -34,7 +34,26 @@ const meetingTopics = [
   "Hiring & Firing",
   "Change Management",
   "Burnout-Prophylaxe",
-  "Diversity-Quote"
+  "Diversity-Quote",
+  // Neue Better place to work Themen
+  "Betriebsrad-Leasing für alle",
+  "Kostenlose Obstkorb-Initiative",
+  "Verpflichtende Kicker-Pausen",
+  "Faire Betriebsrad-Vergabe",
+  "Gratisgetränke am Arbeitsplatz",
+  "Flexible Schreibtischhöhen",
+  "Pflanzen am Arbeitsplatz",
+  "Meditations- und Ruheräume",
+  "Betriebsrad-Werkstatt im Keller",
+  "Betriebsrad-Stellplätze mit Ladestation",
+  "Gesundheitsprämien und Boni",
+  "Monatliche Team-Events",
+  "Barrierefreie Umgebung schaffen",
+  "Bessere Klimaanlage im Sommer",
+  "Eltern-Kind-Büro einrichten",
+  "Vergünstigte ÖPNV-Tickets",
+  "Betriebsrad statt Firmenwagen",
+  "Ergonomische Büromöbel für alle"
 ];
 
 // Custom event to signal that a new topic has been added

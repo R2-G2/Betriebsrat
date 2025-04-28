@@ -74,6 +74,23 @@ const participantPhrases = [
   "Bietet das einen wirklichen Mehrwert?",
   "Wir sollten unser Silo-Denken überwinden.",
   
+  // Better Place to Work & Betriebsrad Phrasen
+  "Wir müssen die Work-Life-Balance verbessern.",
+  "Das Betriebsrad-Konzept ist zukunftsweisend!",
+  "Wie sieht die CO2-Bilanz beim Betriebsrad aus?",
+  "Was kostet uns das Betriebsrad-Programm?",
+  "Können alle Mitarbeiter ein Betriebsrad bekommen?",
+  "Die Mitarbeiter wünschen sich mehr Flexibilität.",
+  "Ich schlage einen Wellness-Raum vor.",
+  "Der Obstkorb sollte wöchentlich aufgefüllt werden.",
+  "Ich nutze mein Betriebsrad täglich!",
+  "Betriebsräder fördern die Gesundheit nachweislich.",
+  "Brauchen wir mehr Fahrradstellplätze?",
+  "Können wir eine Duschmöglichkeit einrichten?",
+  "Eine Betriebsrad-Werkstatt wäre praktisch.",
+  "Haben wir eine Versicherung für die Betriebsräder?",
+  "Wir sollten Corporate Benefits ausbauen.",
+  
   // Hitzige Ausrufe und Streit-Phrasen
   "Das ist kompletter Unsinn!",
   "So kommen wir nie zu einem Ergebnis!",
@@ -128,7 +145,24 @@ const discussionPhrases = [
   "Bitte alle ins Boot holen",
   "Wir sollten das eskalieren",
   "Können wir ein Follow-up vereinbaren?",
-  "Das ist eine Win-win-Situation"
+  "Das ist eine Win-win-Situation",
+  
+  // Better Place to Work Phrasen
+  "Das Betriebsrad fördert den Teamgeist",
+  "Ein besserer Arbeitsplatz steigert die Produktivität",
+  "Flexible Arbeitszeiten sind essentiell",
+  "Die Pausenkultur muss verbessert werden",
+  "Wir sollten ergonomische Stühle anschaffen",
+  "Mehr Pflanzen verbessern das Raumklima",
+  "Betriebsrad statt Firmenwagen spart Kosten",
+  "Der Obstkorb ist immer leer",
+  "Wir brauchen eine Fahrradgarage",
+  "Die Gesundheit der Mitarbeiter hat Priorität",
+  "Betriebsräder sind nachhaltiger als Dienstwagen",
+  "Die Leasingkonditionen sind zu prüfen",
+  "Wir sollten eine Fahrgemeinschafts-App einführen",
+  "Eine E-Bike-Option wäre zukunftsorientiert",
+  "Mentale Gesundheit ist genauso wichtig"
 ];
 
 // Schrei-Phrasen (werden in Großbuchstaben angezeigt)
@@ -144,7 +178,21 @@ const shoutingPhrases = [
   "Niemand hat mich informiert",
   "Das kann nicht dein Ernst sein",
   "Wer ist dafür verantwortlich",
-  "Das ist ein Desaster"
+  "Das ist ein Desaster",
+  
+  // Better Place to Work & Betriebsrad Schreie
+  "Ich will sofort ein Betriebsrad",
+  "Der Obstkorb ist schon wieder leer",
+  "Die Klimaanlage ist kaputt",
+  "Die Arbeitsbelastung ist unmenschlich",
+  "Ich brauche eine Gehaltserhöhung",
+  "Das Betriebsrad wurde gestohlen",
+  "Wer hat mein Betriebsrad beschädigt",
+  "Die Rückenmassage ist ausgefallen",
+  "Ich will einen höhenverstellbaren Schreibtisch",
+  "Die Fahrradwerkstatt ist nie besetzt",
+  "Die Ladestationen sind immer belegt",
+  "Wann kommen endlich die neuen Betriebsräder"
 ];
 
 // Create a unified meetingPhrases object to make it easier to access all phrases
