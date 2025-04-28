@@ -10,6 +10,7 @@ let tableDecorations = []; // Added table decorations array
 let waitress = null; // Waitress character
 let lastConsumptionTime = 0; // Track last time an item was consumed
 let lastRefillTime = 0; // Track last time waitress refilled
+let chatMessages = []; // Speichert Chatnachrichten für den Verlauf
 // meetingTopics and participantPhrases are loaded from external JS files
 
 // Config constants
@@ -70,6 +71,9 @@ function setup() {
   if (typeof document !== 'undefined' && typeof TOPIC_ADDED_EVENT !== 'undefined') {
     document.addEventListener(TOPIC_ADDED_EVENT, handleNewTopic);
   }
+  
+  // Initial setup of chat display
+  setTimeout(updateChatDisplay, 500); // Small delay to ensure DOM is ready
 }
 
 // Create chairs positioned around the meeting table
@@ -441,6 +445,9 @@ function consumeSpecificItem(participantIndex, itemType) {
     isShouting: selectedItem.type === 'koks', // Shout when consuming Koks
     isNewTopic: false
   });
+  
+  // Add to chat history
+  addMessageToChat(text, participantIndex, selectedItem.type === 'koks', false);
   
   // Mark participant as speaking
   p.lastSpoke = millis();
@@ -883,6 +890,9 @@ function createTemporarySpeechBubble(topic, participantIndex = null) {
       isShouting: false
     });
     
+    // Add to chat history as new topic
+    addMessageToChat(topic, participantIndex, false, true);
+    
     // Update the lastSpoke time for the participant
     p.lastSpoke = millis();
   }
@@ -944,6 +954,9 @@ function createSpeechBubble(participantIndex) {
     isShouting: isShouting,
     isNewTopic: false
   });
+  
+  // Add to chat history
+  addMessageToChat(text, participantIndex, isShouting, false);
   
   // Small chance that a shouting will trigger heated discussion
   if (isShouting && !isHeatedDiscussion && random() < HEATED_DISCUSSION_CHANCE) {
@@ -1296,6 +1309,9 @@ function consumeRandomItem(participantIndex) {
     isNewTopic: false
   });
   
+  // Add to chat history
+  addMessageToChat(text, participantIndex, selectedItem.type === 'koks', false);
+  
   // Mark participant as speaking
   p.lastSpoke = millis();
   
@@ -1519,4 +1535,82 @@ function drawKoksLines(koks) {
   rect(20, 12, 15, 2);
   
   pop();
+}
+
+// Add message to chat history
+function addMessageToChat(text, participantIndex, isShouting = false, isNewTopic = false) {
+  // Format current time HH:MM
+  const now = new Date();
+  const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                     now.getMinutes().toString().padStart(2, '0');
+  
+  // Create chat message object
+  const chatMessage = {
+    text: text,
+    participantIndex: participantIndex,
+    time: timeString,
+    isShouting: isShouting,
+    isNewTopic: isNewTopic,
+    createdAt: Date.now()
+  };
+  
+  // Add to chat messages array
+  chatMessages.push(chatMessage);
+  
+  // Limit chat history length to prevent memory issues
+  if (chatMessages.length > 100) {
+    chatMessages.shift(); // Remove oldest message
+  }
+  
+  // Update chat display
+  updateChatDisplay();
+}
+
+// Update chat display
+function updateChatDisplay() {
+  const chatContainer = document.getElementById('chat-messages');
+  if (!chatContainer) return;
+  
+  // Clear current chat
+  chatContainer.innerHTML = '';
+  
+  // Add all messages to the chat container
+  for (let message of chatMessages) {
+    const messageDiv = document.createElement('div');
+    let className = 'chat-message';
+    
+    if (message.isNewTopic) {
+      className += ' new-topic';
+    } else if (message.isShouting) {
+      className += ' shouting';
+    } else {
+      className += ' normal';
+    }
+    
+    messageDiv.className = className;
+    
+    // Only show participant info for normal and shouting messages
+    if (!message.isNewTopic) {
+      const participantSpan = document.createElement('div');
+      participantSpan.className = 'chat-participant';
+      participantSpan.textContent = `Teilnehmer ${message.participantIndex + 1}`;
+      messageDiv.appendChild(participantSpan);
+    }
+    
+    // Message text
+    const textSpan = document.createElement('div');
+    textSpan.textContent = message.text;
+    messageDiv.appendChild(textSpan);
+    
+    // Message time
+    const timeSpan = document.createElement('div');
+    timeSpan.className = 'chat-time';
+    timeSpan.textContent = message.time;
+    messageDiv.appendChild(timeSpan);
+    
+    chatContainer.appendChild(messageDiv);
+  }
+  
+  // Scroll to bottom
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 } 
