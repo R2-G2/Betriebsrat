@@ -35,7 +35,6 @@ const meetingTopics = [
   "Change Management",
   "Burnout-Prophylaxe",
   "Diversity-Quote",
-  // Neue Better place to work Themen
   "Betriebsrad-Leasing für alle",
   "Kostenlose Obstkorb-Initiative",
   "Verpflichtende Kicker-Pausen",

@@ -74,7 +74,7 @@ const participantPhrases = [
   "Bietet das einen wirklichen Mehrwert?",
   "Wir sollten unser Silo-Denken überwinden.",
   
-  // Better Place to Work & Betriebsrad Phrasen
+  // Better Place to Work & Company Bicycle phrases
   "Wir müssen die Work-Life-Balance verbessern.",
   "Das Betriebsrad-Konzept ist zukunftsweisend!",
   "Wie sieht die CO2-Bilanz beim Betriebsrad aus?",
@@ -91,7 +91,7 @@ const participantPhrases = [
   "Haben wir eine Versicherung für die Betriebsräder?",
   "Wir sollten Corporate Benefits ausbauen.",
   
-  // Hitzige Ausrufe und Streit-Phrasen
+  // Heated exclamations and argument phrases
   "Das ist kompletter Unsinn!",
   "So kommen wir nie zu einem Ergebnis!",
   "Jetzt reicht es mir aber!",
@@ -129,7 +129,7 @@ const participantPhrases = [
   "Das ist eine Unterstellung!"
 ];
 
-// Normale Diskussionsphrasen
+// Normal discussion phrases
 const discussionPhrases = [
   "Wir müssen die KPIs überprüfen",
   "Lass uns das offline besprechen",
@@ -147,7 +147,7 @@ const discussionPhrases = [
   "Können wir ein Follow-up vereinbaren?",
   "Das ist eine Win-win-Situation",
   
-  // Better Place to Work Phrasen
+  // Better Place to Work phrases
   "Das Betriebsrad fördert den Teamgeist",
   "Ein besserer Arbeitsplatz steigert die Produktivität",
   "Flexible Arbeitszeiten sind essentiell",
@@ -165,7 +165,7 @@ const discussionPhrases = [
   "Mentale Gesundheit ist genauso wichtig"
 ];
 
-// Schrei-Phrasen (werden in Großbuchstaben angezeigt)
+// Shouting phrases (displayed in ALL CAPS)
 const shoutingPhrases = [
   "Das ist inakzeptabel",
   "Wir haben keine Zeit mehr",
@@ -180,7 +180,7 @@ const shoutingPhrases = [
   "Wer ist dafür verantwortlich",
   "Das ist ein Desaster",
   
-  // Better Place to Work & Betriebsrad Schreie
+  // Better Place to Work & Company Bicycle shouts
   "Ich will sofort ein Betriebsrad",
   "Der Obstkorb ist schon wieder leer",
   "Die Klimaanlage ist kaputt",
