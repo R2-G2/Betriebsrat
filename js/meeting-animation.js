@@ -327,7 +327,7 @@ function drawColaCan(can) {
   
   // Label (simplified)
   fill(255);
-  textSize(8);
+  textSize(6); // Smaller text size (was 8)
   textAlign(CENTER, CENTER);
   textStyle(BOLD);
   text("COLA", 0, 0);
