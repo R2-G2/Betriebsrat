@@ -1257,4 +1257,210 @@ function consumeRandomItem(participantIndex) {
       }
     }, 5000);
   }
+}
+
+// Draw all table decorations
+function drawTableDecorations() {
+  for (let deco of tableDecorations) {
+    push();
+    
+    // Don't draw fully consumed items
+    if (deco.consumed) {
+      pop();
+      continue;
+    }
+    
+    switch (deco.type) {
+      case 'water':
+        drawWaterBottle(deco);
+        break;
+      case 'fruitBowl':
+        drawFruitBowl(deco);
+        break;
+      case 'cola':
+        drawColaCan(deco);
+        break;
+      case 'coffee':
+        drawCoffeeCup(deco);
+        break;
+      case 'koks':
+        drawKoksLines(deco);
+        break;
+    }
+    
+    pop();
+  }
+}
+
+// Draw a water bottle
+function drawWaterBottle(bottle) {
+  push();
+  translate(bottle.x, bottle.y);
+  rotate(bottle.rotation);
+  
+  // Bottle body
+  fill(bottle.color);
+  rect(0, 0, bottle.width, bottle.height, 2, 2, 2, 2);
+  
+  // Bottle cap
+  fill('#A9A9A9'); // Gray for cap
+  rect(0, -bottle.height/2 - 5, 10, 5, 1);
+  
+  // Water level - adjusted by consumption
+  fill('#D6EAF8'); // Light blue with some transparency
+  const waterHeight = (bottle.height - 8) * bottle.consumptionLevel;
+  rect(0, bottle.height/2 - waterHeight/2 - 2, bottle.width - 4, waterHeight, 1);
+  
+  // Highlight
+  stroke(255, 255, 255, 100);
+  strokeWeight(1);
+  line(-bottle.width/3, -bottle.height/3, -bottle.width/3, bottle.height/3);
+  
+  pop();
+}
+
+// Draw a fruit bowl with fruits
+function drawFruitBowl(bowl) {
+  push();
+  translate(bowl.x, bowl.y);
+  
+  // Bowl
+  fill(bowl.color);
+  ellipse(0, 0, bowl.radius * 2, bowl.radius * 0.7);
+  
+  // Bowl rim (3D effect)
+  noFill();
+  stroke(lerpColor(color(bowl.color), color(0), 0.3));
+  strokeWeight(2);
+  ellipse(0, 0, bowl.radius * 2, bowl.radius * 0.7);
+  
+  // Fruits inside bowl - adjust count based on consumption
+  const fruitCount = Math.ceil(bowl.fruits.length * bowl.consumptionLevel);
+  for (let i = 0; i < fruitCount; i++) {
+    const fruit = bowl.fruits[i];
+    fill(fruit.color);
+    noStroke();
+    ellipse(fruit.x, fruit.y, fruit.radius * 2, fruit.radius * 2);
+    
+    // Highlight on fruit
+    fill(255, 255, 255, 80);
+    ellipse(fruit.x - fruit.radius * 0.3, fruit.y - fruit.radius * 0.3, fruit.radius * 0.7, fruit.radius * 0.7);
+  }
+  
+  pop();
+}
+
+// Draw a cola can
+function drawColaCan(can) {
+  push();
+  translate(can.x, can.y);
+  rotate(can.rotation);
+  
+  // Can body
+  fill(can.color);
+  rect(0, 0, can.width, can.height, 2, 2, 0, 0);
+  
+  // Can top
+  fill('#A9A9A9'); // Gray for top
+  rect(0, -can.height/2 - 3, can.width, 6, 2, 2, 0, 0);
+  
+  // Label (simplified)
+  fill(255);
+  textSize(6); // Smaller text size (was 8)
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  text("COLA", 0, 0);
+  
+  // Show consumption by tilting the can if partially consumed
+  if (can.consumptionLevel < 0.9) {
+    rotate(PI/6 * (1 - can.consumptionLevel));
+  }
+  
+  // Highlight
+  stroke(255, 255, 255, 100);
+  strokeWeight(1);
+  line(-can.width/3, -can.height/3, -can.width/3, can.height/3);
+  
+  pop();
+}
+
+// Draw a coffee cup with steam
+function drawCoffeeCup(cup) {
+  push();
+  translate(cup.x, cup.y);
+  
+  // Cup
+  fill('#FFF');
+  arc(0, 0, cup.radius * 2, cup.radius * 2, 0, PI, CHORD);
+  
+  // Coffee inside - adjust level based on consumption
+  fill(cup.color);
+  const coffeeHeight = cup.radius * 1.7 * cup.consumptionLevel;
+  arc(0, cup.radius - coffeeHeight/2, cup.radius * 1.8, coffeeHeight, 0, PI, CHORD);
+  
+  // Cup handle
+  noFill();
+  stroke('#FFF');
+  strokeWeight(3);
+  arc(cup.radius * 0.8, 0, cup.radius, cup.radius * 1.5, -HALF_PI, HALF_PI);
+  
+  // Steam only if coffee is hot (not too consumed)
+  if (cup.consumptionLevel > 0.4) {
+    noFill();
+    stroke(255, 255, 255, 150 * cup.consumptionLevel); // Fade steam as coffee is consumed
+    strokeWeight(1);
+    
+    for (let i = 0; i < 3; i++) {
+      let xOffset = i * 5 - 5;
+      let phase = cup.steamPhase + i * 0.5;
+      beginShape();
+      for (let y = 0; y > -20 * cup.consumptionLevel; y -= 2) {
+        let x = xOffset + sin((frameCount * 0.05) + phase + (y * 0.3)) * 3;
+        curveVertex(x, y);
+      }
+      endShape();
+    }
+  }
+  
+  pop();
+}
+
+// Draw the "Koks" lines
+function drawKoksLines(koks) {
+  push();
+  translate(koks.x, koks.y);
+  
+  // Small mirror or card surface
+  fill(200, 200, 200, 150);
+  noStroke();
+  rect(0, 0, 30, 20, 2);
+  
+  // White lines - adjust based on consumption
+  stroke(255);
+  strokeWeight(2);
+  strokeCap(ROUND);
+  
+  // Only draw lines based on consumption level
+  const visibleLines = Math.ceil(koks.lines.length * koks.consumptionLevel);
+  for (let i = 0; i < visibleLines; i++) {
+    const kokeLine = koks.lines[i];
+    push();
+    translate(-10 + kokeLine.offset, 0);
+    rotate(kokeLine.angle);
+    // Adjust line length based on consumption
+    const lineLength = kokeLine.length * koks.consumptionLevel;
+    line(0, -5, 0, -5 - lineLength);
+    pop();
+  }
+  
+  // Credit card nearby
+  fill(70, 130, 180); // Steel blue
+  noStroke();
+  rect(20, 10, 15, 10, 1);
+  
+  // Card stripe
+  fill(50);
+  rect(20, 12, 15, 2);
+  
+  pop();
 } 
