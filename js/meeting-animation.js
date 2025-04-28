@@ -25,6 +25,7 @@ const SHOUTING_CHANCE = 0.4; // probability that a speech will be shouting - inc
 const HEATED_DISCUSSION_CHANCE = 0.15; // chance that a shouting will trigger heated discussion - increased from 0.05 to 0.15
 const HEATED_DISCUSSION_DURATION = 7000; // duration of heated discussion in ms - reduced from 10000 to 7000
 const CONSUMPTION_CHANCE = 0.001; // Chance a participant consumes something
+const KOKS_CONSUMPTION_CHANCE = 0.003; // Higher chance for Koks consumption
 const REFILL_DURATION = 3000; // How long the waitress stays to refill
 const WAITRESS_INTERVAL = 15000; // Minimum time between waitress appearances
 
@@ -284,7 +285,12 @@ function draw() {
     }
     
     // Random chance to consume something
-    if (random() < CONSUMPTION_CHANCE && millis() - lastConsumptionTime > 5000) {
+    // Special higher chance for Koks consumption
+    if (random() < KOKS_CONSUMPTION_CHANCE && millis() - lastConsumptionTime > 2000) {
+      // Try to consume Koks specifically
+      consumeSpecificItem(i, 'koks');
+    } else if (random() < CONSUMPTION_CHANCE && millis() - lastConsumptionTime > 5000) {
+      // Regular consumption of any item
       consumeRandomItem(i);
     }
   }
@@ -302,20 +308,25 @@ function draw() {
   updateSpeechBubbles();
 }
 
-// Let a participant consume a random item
-function consumeRandomItem(participantIndex) {
-  // Find items that can be consumed
+// Function to specifically consume an item of a certain type
+function consumeSpecificItem(participantIndex, itemType) {
+  // Find items of the specified type that can be consumed
   let consumableItems = tableDecorations.filter(item => 
-    !item.consumed && item.consumptionLevel > 0.2 && item.type !== 'koks'
+    item.type === itemType && !item.consumed && item.consumptionLevel > 0.2
   );
   
-  if (consumableItems.length === 0) return;
+  if (consumableItems.length === 0) return false;
   
-  // Select a random item
+  // Select a random item of this type
   let selectedItem = consumableItems[floor(random(consumableItems.length))];
   
   // Reduce consumption level
-  selectedItem.consumptionLevel -= random(0.3, 0.7);
+  if (itemType === 'koks') {
+    selectedItem.consumptionLevel -= random(0.3, 0.9); // Consumes more Koks at once
+  } else {
+    selectedItem.consumptionLevel -= random(0.3, 0.7);
+  }
+  
   if (selectedItem.consumptionLevel <= 0.2) {
     selectedItem.consumed = true;
   }
@@ -329,7 +340,8 @@ function consumeRandomItem(participantIndex) {
     'water': ['Ich brauche Wasser.', 'Erfrischend!', 'Ah, das tut gut.'],
     'fruitBowl': ['Etwas Obst gefällig?', 'Vitamine!', 'Sehr lecker.'],
     'cola': ['Eine Cola zur Motivation.', 'Koffein für den Kopf!', 'Zuckerschub.'],
-    'coffee': ['Ohne Kaffee geht nichts.', 'Das weckt mich auf.', 'Noch ein Schluck Kaffee.']
+    'coffee': ['Ohne Kaffee geht nichts.', 'Das weckt mich auf.', 'Noch ein Schluck Kaffee.'],
+    'koks': ['Das bringt mich in Schwung!', 'Jetzt kann ich klar denken!', 'Das gibt mir Energie!', 'Kommt noch jemand?', 'Boah, das ist gut!', 'Mehr davon!', 'Arbeiten wird plötzlich Spaß machen!', 'Jetzt bin ich wach!']
   };
   
   const phrases = consumptionPhrases[selectedItem.type] || ['Mmm, lecker.'];
@@ -343,12 +355,29 @@ function consumeRandomItem(participantIndex) {
     content: text,
     createdAt: millis(),
     duration: SPEECH_BUBBLE_DURATION * 0.7, // Shorter duration
-    isShouting: false,
+    isShouting: selectedItem.type === 'koks', // Shout when consuming Koks
     isNewTopic: false
   });
   
   // Mark participant as speaking
   p.lastSpoke = millis();
+  
+  // Special effects for Koks consumers
+  if (selectedItem.type === 'koks') {
+    // Make participant temporarily more animated
+    p.headBobAmount = random(0.5, 1.0); // More head movement
+    p.isShouting = true; // More expressive
+    
+    // Schedule a return to normal after some time
+    setTimeout(() => {
+      if (p && typeof p.headBobAmount !== 'undefined') {
+        p.headBobAmount = random(0.2, 0.5); // Back to normal
+        p.isShouting = false;
+      }
+    }, 5000);
+  }
+  
+  return true;
 }
 
 // Check if waitress should appear to refill items
@@ -395,6 +424,29 @@ function updateWaitress() {
     if (waitress.refillTarget === null && waitress.x === table.x) {
       waitress.refillStartTime = millis();
       waitress.refillTarget = 'table';
+      
+      // Prioritize refilling Koks if it's consumed
+      const koksItems = tableDecorations.filter(item => 
+        item.type === 'koks' && (item.consumed || item.consumptionLevel <= 0.5)
+      );
+      
+      if (koksItems.length > 0) {
+        // Special restocking animation for Koks
+        for (let koksItem of koksItems) {
+          koksItem.consumed = false;
+          koksItem.consumptionLevel = 1.0;
+          
+          // Create a highlight effect around the Koks
+          const fadeEffect = {
+            x: koksItem.x,
+            y: koksItem.y,
+            createdAt: millis(),
+            duration: 1000
+          };
+          
+          // Could implement a fade effect here
+        }
+      }
     }
     
     // If refilling is complete
@@ -1223,4 +1275,70 @@ function drawSpeechBubble(speechBubble) {
   pop();
   
   return true; // Keep this speech bubble
+}
+
+// Consume a random item (that's not being specifically targeted)
+function consumeRandomItem(participantIndex) {
+  // Prefer non-Koks items for general consumption
+  let consumableItems = tableDecorations.filter(item => 
+    !item.consumed && item.consumptionLevel > 0.2
+  );
+  
+  if (consumableItems.length === 0) return;
+  
+  // Select a random item
+  let selectedItem = consumableItems[floor(random(consumableItems.length))];
+  
+  // Reduce consumption level
+  selectedItem.consumptionLevel -= random(0.3, 0.7);
+  
+  if (selectedItem.consumptionLevel <= 0.2) {
+    selectedItem.consumed = true;
+  }
+  
+  // Update last consumption time
+  lastConsumptionTime = millis();
+  
+  // Create a speech bubble for the participant mentioning the consumption
+  const p = participants[participantIndex];
+  const consumptionPhrases = {
+    'water': ['Ich brauche Wasser.', 'Erfrischend!', 'Ah, das tut gut.'],
+    'fruitBowl': ['Etwas Obst gefällig?', 'Vitamine!', 'Sehr lecker.'],
+    'cola': ['Eine Cola zur Motivation.', 'Koffein für den Kopf!', 'Zuckerschub.'],
+    'coffee': ['Ohne Kaffee geht nichts.', 'Das weckt mich auf.', 'Noch ein Schluck Kaffee.'],
+    'koks': ['Das bringt mich in Schwung!', 'Jetzt kann ich klar denken!', 'Das gibt mir Energie!', 'Kommt noch jemand?', 'Boah, das ist gut!', 'Mehr davon!', 'Arbeiten wird plötzlich Spaß machen!', 'Jetzt bin ich wach!']
+  };
+  
+  const phrases = consumptionPhrases[selectedItem.type] || ['Mmm, lecker.'];
+  const text = phrases[floor(random(phrases.length))];
+  
+  // Add consumption speech bubble
+  speechBubbles.push({
+    participantIndex,
+    x: p.x,
+    y: p.y - p.size - 30,
+    content: text,
+    createdAt: millis(),
+    duration: SPEECH_BUBBLE_DURATION * 0.7, // Shorter duration
+    isShouting: selectedItem.type === 'koks', // Shout when consuming Koks
+    isNewTopic: false
+  });
+  
+  // Mark participant as speaking
+  p.lastSpoke = millis();
+  
+  // Special effects for Koks consumers (even in random consumption)
+  if (selectedItem.type === 'koks') {
+    // Make participant temporarily more animated
+    p.headBobAmount = random(0.5, 1.0); // More head movement
+    p.isShouting = true; // More expressive
+    
+    // Schedule a return to normal after some time
+    setTimeout(() => {
+      if (p && typeof p.headBobAmount !== 'undefined') {
+        p.headBobAmount = random(0.2, 0.5); // Back to normal
+        p.isShouting = false;
+      }
+    }, 5000);
+  }
 } 
