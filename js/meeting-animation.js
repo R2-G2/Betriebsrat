@@ -109,11 +109,27 @@ function createChairs() {
 
 // Create participants and position them on chairs
 function createParticipants() {
+  // Definiere die verfügbaren Charaktertypen
+  const availableTypes = Object.keys(characterPresets);
+  
+  // Stelle sicher, dass genZAzubi mindestens einmal vorkommt
+  const requiredTypes = ['genZAzubi'];
+  
   for (let i = 0; i < PARTICIPANT_COUNT; i++) {
     if (i >= chairs.length) break; // Don't create more participants than chairs
     
     let chair = chairs[i];
     let colorIndex = i % PARTICIPANT_COLORS.length;
+    
+    // Wähle einen Charaktertyp
+    let type;
+    if (i < requiredTypes.length) {
+      // Verwende einen der erforderlichen Typen
+      type = requiredTypes[i];
+    } else {
+      // Wähle zufällig einen Typ aus
+      type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+    }
     
     participants.push({
       x: chair.x,
@@ -127,7 +143,8 @@ function createParticipants() {
       lastSpoke: 0,
       headBobAmount: random(0.2, 0.5),
       isAggressive: random() < 0.3, // Some participants are more likely to shout
-      faceColor: PARTICIPANT_COLORS[colorIndex] // Initial face color (changes when shouting)
+      faceColor: PARTICIPANT_COLORS[colorIndex], // Initial face color (changes when shouting)
+      type: type // Füge den Charaktertyp zum Teilnehmer hinzu
     });
   }
 }
@@ -1470,4 +1487,116 @@ function updateChatDisplay() {
   
   // Scroll to bottom
   chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// Update und zeichne die Sprechblasen
+function updateSpeechBubbles() {
+  // Aktuelle Zeit für den Vergleich mit der Erstellungszeit
+  const currentTime = Date.now();
+  
+  // Erstelle eine neue Liste für die verbleibenden Sprechblasen
+  const remainingBubbles = [];
+  
+  // Gehe durch alle Sprechblasen
+  for (let bubble of speechBubbles) {
+    // Prüfe, ob die Sprechblase abgelaufen ist
+    if (currentTime - bubble.time > bubble.duration) {
+      continue; // Überspringe abgelaufene Sprechblasen
+    }
+    
+    // Berechne die Opazität für Ein- und Ausblenden
+    let opacity = 1.0;
+    const elapsed = currentTime - bubble.time;
+    
+    // Einblenden in den ersten 300ms
+    if (elapsed < 300) {
+      opacity = elapsed / 300;
+    } 
+    // Ausblenden in den letzten 500ms
+    else if (elapsed > bubble.duration - 500) {
+      opacity = (bubble.duration - elapsed) / 500;
+    }
+    
+    // Setze Minimumwert für Opazität, damit es nicht komplett verschwindet
+    opacity = max(0.1, opacity);
+    
+    // Zeichne die Sprechblase über dem Teilnehmer
+    push();
+    
+    // Positioniere die Sprechblase über dem Teilnehmer
+    const p = bubble.participant;
+    const bubbleX = p.x;
+    const bubbleY = p.y - p.size - 30;
+    
+    // Bestimme die Größe der Sprechblase basierend auf dem Text
+    const text = bubble.text;
+    textSize(12);
+    const textWidth = min(200, text.length * 7);
+    const textHeight = 40 + Math.floor(text.length / 20) * 15;
+    
+    // Hintergrund der Sprechblase basierend auf dem Typ
+    if (text.includes("!!!") || text === text.toUpperCase()) {
+      // Schrei-Sprechblase
+      fill(255, 200, 200, 255 * opacity);
+      stroke(255, 100, 100, 200 * opacity);
+      strokeWeight(3);
+    } else {
+      // Normale Sprechblase
+      fill(255, 255, 255, 255 * opacity);
+      stroke(0, 0, 0, 100 * opacity);
+      strokeWeight(1);
+    }
+    
+    // Zeichne die Sprechblase
+    ellipse(bubbleX, bubbleY, textWidth + 20, textHeight);
+    
+    // Zeiger zum Teilnehmer
+    triangle(
+      bubbleX, bubbleY + textHeight/2 - 5,
+      bubbleX - 10, bubbleY + textHeight/2 + 10,
+      bubbleX + 10, bubbleY + textHeight/2 + 10
+    );
+    
+    // Text in der Sprechblase
+    fill(0, 0, 0, 255 * opacity);
+    noStroke();
+    textAlign(CENTER, CENTER);
+    text(bubble.text, bubbleX, bubbleY, textWidth, textHeight);
+    
+    pop();
+    
+    // Behalte diese Sprechblase für den nächsten Frame
+    remainingBubbles.push(bubble);
+  }
+  
+  // Aktualisiere die Liste der Sprechblasen
+  speechBubbles = remainingBubbles;
+}
+
+// Funktion zum Erstellen einer temporären Sprechblase (für neu hinzugefügte Themen)
+function createTemporarySpeechBubble(topic) {
+  // Wähle einen zufälligen Teilnehmer aus
+  if (participants.length === 0) return;
+  const randomIndex = Math.floor(Math.random() * participants.length);
+  const participant = participants[randomIndex];
+  
+  // Teilnehmer-Typ abrufen
+  const type = participant.type;
+  
+  // Rufe den zufälligen Namen ab
+  const characterName = getRandomCharacterName(type);
+  
+  // Erstelle eine temporäre Sprechblase mit dem neuen Thema
+  const bubble = {
+    participant: participant,
+    text: (characterName ? characterName + ": " : "") + "Ich schlage ein neues Thema vor: " + topic,
+    time: Date.now(),
+    duration: 5000 // 5 Sekunden anzeigen
+  };
+  
+  // Zum Chat-Verlauf hinzufügen
+  displayChatMessage(bubble.text);
+  
+  // Zur Sprechblasen-Liste hinzufügen
+  speechBubbles.push(bubble);
 } 
