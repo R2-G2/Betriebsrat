@@ -413,11 +413,11 @@ function drawKoksLines(koks) {
   strokeWeight(2);
   strokeCap(ROUND);
   
-  for (let line of koks.lines) {
+  for (let kokeLine of koks.lines) {
     push();
-    translate(-10 + line.offset, 0);
-    rotate(line.angle);
-    line(0, -5, 0, -5 - line.length);
+    translate(-10 + kokeLine.offset, 0);
+    rotate(kokeLine.angle);
+    line(0, -5, 0, -5 - kokeLine.length);
     pop();
   }
   
