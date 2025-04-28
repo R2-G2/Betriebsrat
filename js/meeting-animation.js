@@ -1,6 +1,20 @@
 // Meeting Animation using p5.js
 // Creates a comic-style animation of a workers' council meeting
 
+// Import phrases from meeting-phrases.js
+// Nur Referenzen auf die Phrasen, die bereits in meeting-phrases.js definiert wurden
+
+// Versuche, die Phrasen zu laden, wenn das Skript im Browser ausgeführt wird
+document.addEventListener('DOMContentLoaded', function() {
+  // Wir stellen nur sicher, dass die Phrasen geladen sind, deklarieren sie aber nicht neu
+  if (typeof window.GENERAL_PHRASES === 'undefined') {
+    console.warn('GENERAL_PHRASES ist nicht definiert');
+  }
+  if (typeof window.GEN_Z_PHRASES === 'undefined') {
+    console.warn('GEN_Z_PHRASES ist nicht definiert');
+  }
+});
+
 // Global variables
 let participants = [];
 let table;
@@ -10,7 +24,8 @@ let tableDecorations = []; // Added table decorations array
 let waitress = null; // Waitress character
 let lastConsumptionTime = 0; // Track last time an item was consumed
 let lastRefillTime = 0; // Track last time waitress refilled
-let chatMessages = []; // Speichert Chatnachrichten für den Verlauf
+let chatMessages = []; // Stores chat messages for history
+let chatMessagesElement = null; // DOM element for chat history
 // meetingTopics and participantPhrases are loaded from external JS files
 
 // Config constants
@@ -34,6 +49,8 @@ const KOKS_REFILL_INTERVAL = 8000; // Shorter interval for Koks refills only
 // State variables
 let isHeatedDiscussion = false;
 let heatedDiscussionEndTime = 0;
+let isDiscussionActive = true; // Variable to control discussion
+let debateIntensity = 0; // Intensität der aktuellen Debatte (0.0 bis 1.0)
 
 // Main p5.js setup function
 function setup() {
@@ -72,6 +89,9 @@ function setup() {
     document.addEventListener(TOPIC_ADDED_EVENT, handleNewTopic);
   }
   
+  // Initialisiere das DOM-Element für den Chat-Verlauf
+  chatMessagesElement = document.getElementById('chat-messages');
+  
   // Initial setup of chat display
   setTimeout(updateChatDisplay, 500); // Small delay to ensure DOM is ready
 }
@@ -109,11 +129,17 @@ function createChairs() {
 
 // Create participants and position them on chairs
 function createParticipants() {
-  // Definiere die verfügbaren Charaktertypen
+  // Define available character types
   const availableTypes = Object.keys(characterPresets);
   
-  // Stelle sicher, dass genZAzubi mindestens einmal vorkommt
-  const requiredTypes = ['genZAzubi'];
+  // Make sure genZAzubi appears at least twice
+  const requiredTypes = ['genZAzubi', 'genZAzubi'];
+  
+  // Increase probability for genZAzubi (35%)
+  const weightedTypes = [...availableTypes];
+  for (let i = 0; i < Math.floor(availableTypes.length * 0.35); i++) {
+    weightedTypes.push('genZAzubi');
+  }
   
   for (let i = 0; i < PARTICIPANT_COUNT; i++) {
     if (i >= chairs.length) break; // Don't create more participants than chairs
@@ -121,30 +147,38 @@ function createParticipants() {
     let chair = chairs[i];
     let colorIndex = i % PARTICIPANT_COLORS.length;
     
-    // Wähle einen Charaktertyp
+    // Select a character type
     let type;
     if (i < requiredTypes.length) {
-      // Verwende einen der erforderlichen Typen
+      // Use one of the required types
       type = requiredTypes[i];
     } else {
-      // Wähle zufällig einen Typ aus
-      type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+      // Choose a random type from the weighted list
+      type = weightedTypes[Math.floor(Math.random() * weightedTypes.length)];
     }
+    
+    // Generate a name for this participant
+    const characterName = getRandomCharacterName(type);
+    
+    // Get appearance settings for this character type
+    const appearance = characterAppearances[type] || characterAppearances.regular;
     
     participants.push({
       x: chair.x,
       y: chair.y,
       baseX: chair.x,
       baseY: chair.y,
-      size: 35,
-      color: PARTICIPANT_COLORS[colorIndex],
+      size: appearance.size || 35,
+      color: appearance.color || PARTICIPANT_COLORS[colorIndex],
       speedX: random(-0.5, 0.5),
       speedY: random(-0.5, 0.5),
       lastSpoke: 0,
       headBobAmount: random(0.2, 0.5),
       isAggressive: random() < 0.3, // Some participants are more likely to shout
-      faceColor: PARTICIPANT_COLORS[colorIndex], // Initial face color (changes when shouting)
-      type: type // Füge den Charaktertyp zum Teilnehmer hinzu
+      faceColor: appearance.color || PARTICIPANT_COLORS[colorIndex], // Initial face color (changes when shouting)
+      type: type, // Add character type to participant
+      name: characterName, // Store name directly with participant
+      extras: appearance.extras || {} // Add any extra appearance elements
     });
   }
 }
@@ -363,6 +397,11 @@ function draw() {
     participants.forEach(p => {
       p.faceColor = p.color;
     });
+  }
+  
+  // Allmählich die Debatte-Intensität normalisieren, wenn keine hitzige Debatte aktiv ist
+  if (!isHeatedDiscussion && debateIntensity > 0) {
+    debateIntensity = max(0, debateIntensity - 0.005);
   }
   
   // Update and draw participants
@@ -788,6 +827,9 @@ function updateParticipant(p, index) {
 function drawParticipant(p) {
   push();
   
+  // Get character appearance based on type
+  const appearance = characterAppearances[p.type] || characterAppearances.regular;
+  
   // Body
   fill(p.color);
   ellipse(p.x, p.y + p.size * 0.6, p.size * 0.9, p.size * 1.2);
@@ -796,8 +838,45 @@ function drawParticipant(p) {
   fill(p.faceColor); // Use the face color (changes when shouting)
   ellipse(p.x, p.y, p.size, p.size);
   
+  // Gen-Z special appearance elements
+  if (p.type === 'genZAzubi') {
+    // Draw headphones if they have them
+    if (appearance.extras.hasHeadphones) {
+      stroke(appearance.extras.headphoneColor);
+      strokeWeight(3);
+      noFill();
+      arc(p.x, p.y, p.size * 1.1, p.size * 1.1, PI * 0.1, PI * 0.9);
+      // Headphone ear pieces
+      fill(appearance.extras.headphoneColor);
+      noStroke();
+      ellipse(p.x - p.size/2 * 0.95, p.y, 8, 10);
+      ellipse(p.x + p.size/2 * 0.95, p.y, 8, 10);
+    }
+    
+    // Draw hat/beanie
+    if (appearance.extras.hatColor) {
+      fill(appearance.extras.hatColor);
+      arc(p.x, p.y - p.size/2 * 0.6, p.size * 0.9, p.size * 0.5, PI, TWO_PI);
+    }
+  }
+  
   // Eyes
   fill(0);
+  
+  // If the character has glasses
+  if (p.type === 'genZAzubi' && appearance.extras.hasGlasses) {
+    stroke(appearance.extras.glassesColor);
+    strokeWeight(1.5);
+    noFill();
+    // Draw glasses
+    ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, 10, 10);
+    ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, 10, 10);
+    // Bridge of glasses
+    line(p.x - p.size * 0.15, p.y - p.size * 0.1, p.x + p.size * 0.15, p.y - p.size * 0.1);
+    noStroke();
+    // Eyes behind glasses
+    fill(0);
+  }
   
   // Eyes change when shouting
   if (p.isShouting) {
@@ -819,8 +898,14 @@ function drawParticipant(p) {
     pop();
   } else {
     // Normal round eyes
-    ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, 5, 5);
-    ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, 5, 5);
+    if (!(p.type === 'genZAzubi' && appearance.extras.hasGlasses)) {
+      ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, 5, 5);
+      ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, 5, 5);
+    } else {
+      // Smaller eyes behind glasses
+      ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, 4, 4);
+      ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, 4, 4);
+    }
   }
   
   // Mouth
@@ -875,6 +960,7 @@ function handleNewTopic(event) {
 function startHeatedDiscussion() {
   isHeatedDiscussion = true;
   heatedDiscussionEndTime = millis() + HEATED_DISCUSSION_DURATION;
+  debateIntensity = 1.0; // Maximale Intensität während einer hitzigen Debatte
   
   // Make some participants shout
   participants.forEach(p => {
@@ -891,249 +977,92 @@ function createTemporarySpeechBubble(topic, participantIndex = null) {
     participantIndex = Math.floor(random(participants.length));
   }
   
-  // Make the participant speak the new topic
-  if (participantIndex >= 0 && participantIndex < participants.length) {
-    const p = participants[participantIndex];
-    
-    // Create speech bubble with the new topic and highlight flag
-    speechBubbles.push({
-      participantIndex,
-      x: p.x,
-      y: p.y - p.size - 30,
-      content: topic,
-      createdAt: millis(),
-      duration: NEW_TOPIC_HIGHLIGHT_DURATION, // Longer duration for new topics
-      isNewTopic: true, // Flag to highlight new topics
-      isShouting: false
-    });
-    
-    // Add to chat history as new topic
-    addMessageToChat(topic, participantIndex, false, true);
-    
-    // Update the lastSpoke time for the participant
-    p.lastSpoke = millis();
-  }
+  // Verwende den beim Teilnehmer gespeicherten Namen
+  const characterName = participants[participantIndex].name || "Unbekannt";
+  
+  // Erstelle eine temporäre Sprechblase mit dem neuen Thema
+  const bubble = {
+    participantIndex,
+    x: participants[participantIndex].x,
+    y: participants[participantIndex].y - participants[participantIndex].size - 30,
+    content: (characterName ? characterName + ": " : "") + "Ich schlage ein neues Thema vor: " + topic,
+    createdAt: Date.now(),
+    duration: 5000 // 5 Sekunden anzeigen
+  };
+  
+  // Zum Chat-Verlauf hinzufügen
+  displayChatMessage(bubble.content);
+  
+  // Zur Sprechblasen-Liste hinzufügen
+  speechBubbles.push(bubble);
 }
 
-// Create a new speech bubble for a participant
+// Erzeugt eine Sprechblase für einen Teilnehmer
 function createSpeechBubble(participant) {
   // 30% Chance, eine Sprechblase zu erstellen
-  if (Math.random() < 0.3) {
-    // Sprechblase erstellen
-    const bubble = {
-      participant: participant,
-      text: "",
-      time: Date.now(),
-      duration: 3000 + Math.random() * 2000 // 3-5 Sekunden
-    };
+  if (random() > 0.3) return null;
+  
+  // Bestimme, ob die Person schreien soll (basierend auf Charakter-Eigenschaften)
+  let isShouting = false;
+  let text = '';
+  
+  // Prüfe, ob aktuell eine hitzige Debatte läuft
+  const heatedDebate = isHeatedDiscussion || debateIntensity > 0.7;
+  
+  // Nutze die Schrei-Wahrscheinlichkeit des Charakters
+  const participantIndex = participants.indexOf(participant);
+  const characterType = participant.type || 'regular';
+  const shoutProbability = characterPresets[characterType]?.shoutProbability || 0.15;
+  
+  // Während hitziger Debatten ist die Wahrscheinlichkeit zu schreien höher
+  const effectiveShoutProbability = heatedDebate ? shoutProbability * 1.5 : shoutProbability;
+  
+  // Bestimme, ob geschrien wird
+  isShouting = random() < effectiveShoutProbability;
+  
+  // Wähle die Phrase basierend auf dem Charakter-Typ und Schrei-Status
+  if (isShouting) {
+    // Schrei-Phrasen
+    let shoutOptions = GENERAL_PHRASES.filter(phrase => phrase.length < 50);
     
-    // Teilnehmer-Typ abrufen
-    const type = participant.type;
+    // Wenn es ein GenZ-Azubi ist, verwende GenZ-Phrasen
+    if (characterType === 'genZAzubi') {
+      shoutOptions = GEN_Z_PHRASES;
+    }
     
-    // Rufe den zufälligen Namen ab
-    const characterName = getRandomCharacterName(type);
+    // Wähle eine zufällige Phrase
+    text = shoutOptions[Math.floor(random() * shoutOptions.length)];
     
-    // Zufällig entscheiden, ob es sich um einen Ausruf handelt (geschrien wird)
-    // Während hitziger Diskussionen ist die Wahrscheinlichkeit höher (35% statt 15%)
-    const shoutProbability = isHeatedDiscussion ? 0.35 : characterPresets[type].shoutProbability;
-    const isShout = Math.random() < shoutProbability;
+    // Formatiere den Text für Schreien (GROSSBUCHSTABEN und Ausrufezeichen)
+    text = text.toUpperCase();
     
-    if (isShout) {
-      // Hol einen zufälligen Schrei-Satz aus der Liste
-      const shout = meetingPhrases.shoutingPhrases[Math.floor(Math.random() * meetingPhrases.shoutingPhrases.length)];
-      
-      // Konvertiere zu Großbuchstaben und füge Ausrufezeichen hinzu (manchmal mehrere)
-      const exclamationMarks = "!".repeat(1 + Math.floor(Math.random() * 3));
-      bubble.text = (characterName ? characterName + ": " : "") + shout.toUpperCase() + exclamationMarks;
+    // Füge 1-3 Ausrufezeichen hinzu
+    const exclamationCount = Math.floor(random() * 3) + 1;
+    text += '!'.repeat(exclamationCount);
+    
+  } else {
+    // Normale Sprache (nicht schreien)
+    // Wähle abhängig vom Charakter-Typ
+    if (characterType === 'genZAzubi' && random() < 0.8) {
+      // GenZ-Azubi hat 80% Chance, GenZ-Phrasen zu verwenden
+      text = GEN_Z_PHRASES[Math.floor(random() * GEN_Z_PHRASES.length)];
     } else {
-      // 70% Chance, eine charakterspezifische Phrase zu verwenden, wenn verfügbar
-      if (Math.random() < 0.7 && participantPhrases[characterPresets[type].participantPhraseIndex]) {
-        const phrases = participantPhrases[characterPresets[type].participantPhraseIndex];
-        bubble.text = (characterName ? characterName + ": " : "") + phrases[Math.floor(Math.random() * phrases.length)];
-      } else {
-        // Ansonsten verwende eine allgemeine Phrase
-        bubble.text = (characterName ? characterName + ": " : "") + meetingPhrases.normalPhrases[Math.floor(Math.random() * meetingPhrases.normalPhrases.length)];
-      }
-    }
-    
-    // Füge die Sprechblase dem Chat-Verlauf hinzu
-    displayChatMessage(bubble.text);
-    
-    // Sprechblase zum Array hinzufügen
-    speechBubbles.push(bubble);
-  }
-}
-
-// Funktion zum Anzeigen einer Chat-Nachricht im Chat-Verlauf
-function displayChatMessage(message) {
-  if (!chatMessages) return;
-  
-  // Erstelle ein neues Chat-Element
-  const chatElement = document.createElement('div');
-  chatElement.classList.add('chat-message');
-  chatElement.textContent = message;
-  
-  // Füge das Element zum Chat-Verlauf hinzu
-  chatMessages.appendChild(chatElement);
-  
-  // Scrolle zum neuesten Eintrag
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Handle window resize
-function windowResized() {
-  let container = document.getElementById('meeting-animation');
-  resizeCanvas(container.offsetWidth, container.offsetHeight);
-  
-  // Recalculate table position and size
-  table.x = width / 2;
-  table.y = height / 2;
-  table.width = width * 0.6;
-  table.height = height * 0.4;
-  
-  // Reposition chairs and participants
-  chairs = [];
-  createChairs();
-  
-  for (let i = 0; i < participants.length; i++) {
-    if (i < chairs.length) {
-      participants[i].baseX = chairs[i].x;
-      participants[i].baseY = chairs[i].y;
+      // Andere Charaktere verwenden allgemeine Phrasen
+      text = GENERAL_PHRASES[Math.floor(random() * GENERAL_PHRASES.length)];
     }
   }
   
-  // Recreate table decorations for new table size
-  createTableDecorations();
-}
-
-function startDiscussion() {
-  if (!isDiscussionActive) return;
-  
-  // Zufällig einen Teilnehmer auswählen
-  const speakerIndex = Math.floor(Math.random() * participants.length);
-  const speaker = participants[speakerIndex];
-  
-  // Prüfen, ob der Teilnehmer bereits spricht
-  if (speaker.speechBubble) return;
-  
-  // Directly call createSpeechBubble with speaker index only
-  createSpeechBubble(speaker);
-  
-  // Diskussion nach einer zufälligen Zeit fortsetzen
-  const delay = 0.5 + Math.random() * 2;
-  setTimeout(startDiscussion, delay * 1000);
-}
-
-// Draw a speech bubble
-function drawSpeechBubble(speechBubble) {
-  const p = participants[speechBubble.participantIndex];
-  const elapsed = millis() - speechBubble.createdAt;
-  const remainingTime = speechBubble.duration - elapsed;
-  
-  if (remainingTime <= 0) {
-    return false; // Remove this speech bubble
-  }
-  
-  // Update position to follow participant
-  speechBubble.x = p.x;
-  speechBubble.y = p.y - p.size - 30;
-  
-  // Use our improved calculateBubbleSize function
-  const bubbleSize = calculateBubbleSize(speechBubble.content);
-  
-  push();
-  translate(speechBubble.x, speechBubble.y);
-  
-  // Animate the bubble if shouting - more pronounced shake and pulsing effect
-  if (speechBubble.isShouting) {
-    // More aggressive shaking for shouting
-    const shakeAmount = sin(elapsed * 0.05) * 3;
-    translate(shakeAmount, random(-3, 3));
-    
-    // Pulsing size for shouting - emphasize anger
-    const pulseFactor = 1.3 + sin(elapsed * 0.01) * 0.1;
-    scale(pulseFactor);
-  }
-  
-  // Make the bubble fade in and out
-  const alpha = map(
-    min(elapsed, remainingTime),
-    0,
-    300,
-    0,
-    255
-  );
-  
-  // Style based on speaking mode
-  if (speechBubble.isShouting) {
-    // Stronger red tint for shouting with gradient effect
-    const redIntensity = 255 - sin(elapsed * 0.02) * 20;
-    fill(redIntensity, 200, 200, alpha);
-    stroke(255, 100, 100, alpha);
-    strokeWeight(4);
-    // Make shouting bubbles larger with dynamic sizing
-    const enlargeFactor = 1.2;
-    rect(-bubbleSize.width/2 * enlargeFactor, -bubbleSize.height/2 * enlargeFactor, 
-         bubbleSize.width * enlargeFactor, bubbleSize.height * enlargeFactor, 
-         8, 8, 8, 8);
-         
-    // Add "anger marks" - small lines around the bubble
-    stroke(255, 80, 80, alpha);
-    strokeWeight(2);
-    for (let i = 0; i < 6; i++) {
-      const angle = i * PI / 3;
-      const distance = bubbleSize.width/2 * enlargeFactor + 10;
-      const lineLength = 8 + random(4);
-      const x1 = cos(angle) * distance;
-      const y1 = sin(angle) * distance;
-      line(x1, y1, x1 * 1.3, y1 * 1.3);
-    }
-  } else if (speechBubble.isNewTopic) {
-    // Topic bubbles
-    fill(230, 255, 230, alpha);
-    stroke(180, 255, 180, alpha);
-    strokeWeight(2);
-    rect(-bubbleSize.width/2, -bubbleSize.height/2, bubbleSize.width, bubbleSize.height, 10, 10, 10, 10);
-  } else {
-    // Regular speech
-    fill(255, 255, 255, alpha);
-    stroke(200, 200, 200, alpha);
-    strokeWeight(1);
-    rect(-bubbleSize.width/2, -bubbleSize.height/2, bubbleSize.width, bubbleSize.height, 10, 10, 10, 10);
-  }
-  
-  // Add the speech bubble tail
-  fill(255, 255, 255, alpha);
-  if (speechBubble.isShouting) {
-    fill(255, 200, 200, alpha);
-  } else if (speechBubble.isNewTopic) {
-    fill(230, 255, 230, alpha);
-  }
-  
-  noStroke();
-  triangle(-10, bubbleSize.height/2, 10, bubbleSize.height/2, 0, bubbleSize.height/2 + 15);
-  
-  // Text
-  if (speechBubble.isShouting) {
-    // Bold text for shouting with stronger color
-    textStyle(BOLD);
-    fill(180, 0, 0, alpha);
-    textSize(14); // Larger text size for shouting
-  } else {
-    textStyle(NORMAL);
-    fill(0, 0, 0, alpha);
-    textSize(12);
-  }
-  
-  textAlign(CENTER, CENTER);
-  // Draw text within the bubble's boundaries
-  const textAreaWidth = bubbleSize.width - 20;
-  const textAreaHeight = bubbleSize.height - 20;
-  text(speechBubble.content, 0, 0, textAreaWidth, textAreaHeight);
-  
-  pop();
-  
-  return true; // Keep this speech bubble
+  // Erstelle die Sprechblase
+  return {
+    participantIndex: participantIndex,
+    text: text,
+    x: participant.x,
+    y: participant.y - participant.size - 30,
+    createdAt: millis(),
+    duration: isShouting ? 5000 : 4000, // Schreien ist länger sichtbar
+    isShouting: isShouting,
+    alpha: 0 // Startet mit Fade-in
+  };
 }
 
 // Consume a random item (that's not being specifically targeted)
@@ -1172,19 +1101,30 @@ function consumeRandomItem(participantIndex) {
   const text = phrases[floor(random(phrases.length))];
   
   // Add consumption speech bubble
-  speechBubbles.push({
-    participantIndex,
+  const newBubble = {
+    participantIndex: participantIndex,
+    text: text,
     x: p.x,
     y: p.y - p.size - 30,
-    content: text,
     createdAt: millis(),
-    duration: SPEECH_BUBBLE_DURATION * 0.7, // Shorter duration
+    duration: 4000, // Shorter duration
     isShouting: selectedItem.type === 'koks', // Shout when consuming Koks
-    isNewTopic: false
-  });
+    alpha: 0 // Starts with fade-in
+  };
+  
+  speechBubbles.push(newBubble);
   
   // Add to chat history
-  addMessageToChat(text, participantIndex, selectedItem.type === 'koks', false);
+  const chatMessage = {
+    participant: p,
+    message: text,
+    isShouting: selectedItem.type === 'koks',
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+  
+  chatMessages.push(chatMessage);
+  if (chatMessages.length > 50) chatMessages.shift();
+  updateChatDisplay();
   
   // Mark participant as speaking
   p.lastSpoke = millis();
@@ -1436,167 +1376,296 @@ function addMessageToChat(text, participantIndex, isShouting = false, isNewTopic
     chatMessages.shift(); // Remove oldest message
   }
   
-  // Update chat display
+  // Update chat display using the DOM element
   updateChatDisplay();
 }
 
 // Update chat display
 function updateChatDisplay() {
-  const chatContainer = document.getElementById('chat-messages');
-  if (!chatContainer) return;
-  
-  // Clear current chat
-  chatContainer.innerHTML = '';
-  
-  // Add all messages to the chat container
-  for (let message of chatMessages) {
-    const messageDiv = document.createElement('div');
-    let className = 'chat-message';
-    
-    if (message.isNewTopic) {
-      className += ' new-topic';
-    } else if (message.isShouting) {
-      className += ' shouting';
-    } else {
-      className += ' normal';
-    }
-    
-    messageDiv.className = className;
-    
-    // Only show participant info for normal and shouting messages
-    if (!message.isNewTopic) {
-      const participantSpan = document.createElement('div');
-      participantSpan.className = 'chat-participant';
-      participantSpan.textContent = `Teilnehmer ${message.participantIndex + 1}`;
-      messageDiv.appendChild(participantSpan);
-    }
-    
-    // Message text
-    const textSpan = document.createElement('div');
-    textSpan.textContent = message.text;
-    messageDiv.appendChild(textSpan);
-    
-    // Message time
-    const timeSpan = document.createElement('div');
-    timeSpan.className = 'chat-time';
-    timeSpan.textContent = message.time;
-    messageDiv.appendChild(timeSpan);
-    
-    chatContainer.appendChild(messageDiv);
+  if (!chatMessagesElement) {
+    chatMessagesElement = document.getElementById('chat-messages');
+    if (!chatMessagesElement) return;
   }
   
-  // Scroll to bottom
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  // Aktuellen Chat leeren
+  chatMessagesElement.innerHTML = '';
+  
+  // Alle Nachrichten zum Chat-Container hinzufügen
+  for (let message of chatMessages) {
+    const chatElement = document.createElement('div');
+    chatElement.classList.add('chat-message');
+    
+    // Shouting-Stil für Nachrichten in Großbuchstaben mit Ausrufezeichen
+    if (message.content && (message.content === message.content.toUpperCase() && 
+        message.content.includes('!') && message.content.length > 3)) {
+      chatElement.classList.add('shouting');
+    }
+    
+    // Name und Zeitstempel in der ersten Zeile
+    const headerDiv = document.createElement('div');
+    headerDiv.classList.add('chat-header');
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.classList.add('chat-name');
+    nameSpan.textContent = message.name || "Unbekannt";
+    
+    const timeSpan = document.createElement('span');
+    timeSpan.classList.add('chat-time');
+    timeSpan.textContent = message.time || "";
+    
+    headerDiv.appendChild(nameSpan);
+    headerDiv.appendChild(document.createTextNode(' '));
+    headerDiv.appendChild(timeSpan);
+    
+    // Nachrichtentext in der zweiten Zeile
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('chat-content');
+    contentDiv.textContent = message.content || message.text || "";
+    
+    // Alles zusammenfügen
+    chatElement.appendChild(headerDiv);
+    chatElement.appendChild(contentDiv);
+    
+    // Das Element zum Chat-Verlauf hinzufügen
+    chatMessagesElement.appendChild(chatElement);
+  }
+  
+  // Scrollen zum Ende
+  chatMessagesElement.scrollTop = chatMessagesElement.scrollHeight;
 }
 
 // Update und zeichne die Sprechblasen
 function updateSpeechBubbles() {
-  // Aktuelle Zeit für den Vergleich mit der Erstellungszeit
-  const currentTime = Date.now();
+  // Filtere abgelaufene Sprechblasen
+  speechBubbles = speechBubbles.filter(bubble => drawSpeechBubble(bubble));
   
-  // Erstelle eine neue Liste für die verbleibenden Sprechblasen
-  const remainingBubbles = [];
-  
-  // Gehe durch alle Sprechblasen
-  for (let bubble of speechBubbles) {
-    // Prüfe, ob die Sprechblase abgelaufen ist
-    if (currentTime - bubble.time > bubble.duration) {
-      continue; // Überspringe abgelaufene Sprechblasen
+  // Zufällig neue Sprechblasen erstellen
+  if (isDiscussionActive && random() < 0.05 && participants.length > 0) {
+    const participant = participants[floor(random() * participants.length)];
+    const newBubble = createSpeechBubble(participant);
+    if (newBubble) {
+      speechBubbles.push(newBubble);
+      
+      // Füge Nachricht auch zum Chat hinzu
+      const chatMessage = {
+        participant: participant,
+        message: newBubble.text,
+        isShouting: newBubble.isShouting,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      chatMessages.push(chatMessage);
+      if (chatMessages.length > 50) chatMessages.shift(); // Begrenze die Anzahl der Chat-Nachrichten
+      updateChatDisplay();
     }
-    
-    // Berechne die Opazität für Ein- und Ausblenden
-    let opacity = 1.0;
-    const elapsed = currentTime - bubble.time;
-    
-    // Einblenden in den ersten 300ms
-    if (elapsed < 300) {
-      opacity = elapsed / 300;
-    } 
-    // Ausblenden in den letzten 500ms
-    else if (elapsed > bubble.duration - 500) {
-      opacity = (bubble.duration - elapsed) / 500;
-    }
-    
-    // Setze Minimumwert für Opazität, damit es nicht komplett verschwindet
-    opacity = max(0.1, opacity);
-    
-    // Zeichne die Sprechblase über dem Teilnehmer
-    push();
-    
-    // Positioniere die Sprechblase über dem Teilnehmer
-    const p = bubble.participant;
-    const bubbleX = p.x;
-    const bubbleY = p.y - p.size - 30;
-    
-    // Bestimme die Größe der Sprechblase basierend auf dem Text
-    const text = bubble.text;
-    textSize(12);
-    const textWidth = min(200, text.length * 7);
-    const textHeight = 40 + Math.floor(text.length / 20) * 15;
-    
-    // Hintergrund der Sprechblase basierend auf dem Typ
-    if (text.includes("!!!") || text === text.toUpperCase()) {
-      // Schrei-Sprechblase
-      fill(255, 200, 200, 255 * opacity);
-      stroke(255, 100, 100, 200 * opacity);
-      strokeWeight(3);
-    } else {
-      // Normale Sprechblase
-      fill(255, 255, 255, 255 * opacity);
-      stroke(0, 0, 0, 100 * opacity);
-      strokeWeight(1);
-    }
-    
-    // Zeichne die Sprechblase
-    ellipse(bubbleX, bubbleY, textWidth + 20, textHeight);
-    
-    // Zeiger zum Teilnehmer
-    triangle(
-      bubbleX, bubbleY + textHeight/2 - 5,
-      bubbleX - 10, bubbleY + textHeight/2 + 10,
-      bubbleX + 10, bubbleY + textHeight/2 + 10
-    );
-    
-    // Text in der Sprechblase
-    fill(0, 0, 0, 255 * opacity);
-    noStroke();
-    textAlign(CENTER, CENTER);
-    text(bubble.text, bubbleX, bubbleY, textWidth, textHeight);
-    
-    pop();
-    
-    // Behalte diese Sprechblase für den nächsten Frame
-    remainingBubbles.push(bubble);
   }
-  
-  // Aktualisiere die Liste der Sprechblasen
-  speechBubbles = remainingBubbles;
 }
 
-// Funktion zum Erstellen einer temporären Sprechblase (für neu hinzugefügte Themen)
-function createTemporarySpeechBubble(topic) {
-  // Wähle einen zufälligen Teilnehmer aus
-  if (participants.length === 0) return;
-  const randomIndex = Math.floor(Math.random() * participants.length);
-  const participant = participants[randomIndex];
+// Zeichnet eine Sprechblase
+function drawSpeechBubble(speechBubble) {
+  // Berechne Opacity basierend auf Lebensdauer
+  const now = millis();
+  const age = now - speechBubble.createdAt;
   
-  // Teilnehmer-Typ abrufen
-  const type = participant.type;
+  // Fade-in und Fade-out Animationen
+  if (age < 500) {
+    speechBubble.alpha = map(age, 0, 500, 0, 1);
+  } else if (age > speechBubble.duration - 500) {
+    speechBubble.alpha = map(age, speechBubble.duration - 500, speechBubble.duration, 1, 0);
+  } else {
+    speechBubble.alpha = 1;
+  }
   
-  // Rufe den zufälligen Namen ab
-  const characterName = getRandomCharacterName(type);
+  // Beende, wenn die Lebensdauer abgelaufen ist
+  if (age >= speechBubble.duration) {
+    return false;
+  }
   
-  // Erstelle eine temporäre Sprechblase mit dem neuen Thema
-  const bubble = {
-    participant: participant,
-    text: (characterName ? characterName + ": " : "") + "Ich schlage ein neues Thema vor: " + topic,
-    time: Date.now(),
-    duration: 5000 // 5 Sekunden anzeigen
+  // Hole den Teilnehmer
+  const participant = participants[speechBubble.participantIndex];
+  if (!participant) return false;
+  
+  // Update position to follow participant
+  speechBubble.x = participant.x;
+  speechBubble.y = participant.y - participant.size - 30;
+  
+  // Berechne Größe basierend auf dem Text
+  textSize(14);
+  const bubbleTextWidth = min(200, textWidth(speechBubble.text) + 20);
+  const lines = ceil(bubbleTextWidth / 200);
+  const textHeight = lines * 20 + 10;
+  
+  push();
+  translate(speechBubble.x, speechBubble.y);
+  
+  // Verschiedene Stile für Schreien und normale Sprache
+  if (speechBubble.isShouting) {
+    // Schrei-Sprechblase (rot/orange)
+    fill(255, 100, 50, 255 * speechBubble.alpha);
+    stroke(220, 50, 0, 255 * speechBubble.alpha);
+    strokeWeight(2);
+  } else {
+    // Normale Sprechblase (weiß)
+    fill(255, 255 * speechBubble.alpha);
+    stroke(120, 255 * speechBubble.alpha);
+    strokeWeight(1);
+  }
+  
+  // Zeichne die Sprechblase
+  ellipse(0, 0, bubbleTextWidth + 20, textHeight + 10);
+  
+  // Spitze der Sprechblase
+  triangle(
+    -10, textHeight/2,
+    10, textHeight/2,
+    0, textHeight/2 + 15
+  );
+  
+  // Text
+  if (speechBubble.isShouting) {
+    fill(255, 255, 255, 255 * speechBubble.alpha);
+    textStyle(BOLD);
+  } else {
+    fill(0, 255 * speechBubble.alpha);
+    textStyle(NORMAL);
+  }
+  
+  textAlign(CENTER, CENTER);
+  textSize(speechBubble.isShouting ? 16 : 14);
+  text(speechBubble.text, 0, 0, bubbleTextWidth, textHeight);
+  
+  pop();
+  return true;
+}
+
+// Handle window resize
+function windowResized() {
+  let container = document.getElementById('meeting-animation');
+  resizeCanvas(container.offsetWidth, container.offsetHeight);
+  
+  // Recalculate table position and size
+  table.x = width / 2;
+  table.y = height / 2;
+  table.width = width * 0.6;
+  table.height = height * 0.4;
+  
+  // Reposition chairs and participants
+  chairs = [];
+  createChairs();
+  
+  for (let i = 0; i < participants.length; i++) {
+    if (i < chairs.length) {
+      participants[i].baseX = chairs[i].x;
+      participants[i].baseY = chairs[i].y;
+    }
+  }
+  
+  // Recreate table decorations for new table size
+  createTableDecorations();
+}
+
+function startDiscussion() {
+  if (!isDiscussionActive) return;
+  
+  // Zufällig einen Teilnehmer auswählen
+  const speakerIndex = Math.floor(Math.random() * participants.length);
+  const speaker = participants[speakerIndex];
+  
+  // Prüfen, ob der Teilnehmer bereits spricht
+  if (speaker.speechBubble) return;
+  
+  // Sprechblase erstellen
+  const newBubble = createSpeechBubble(speaker);
+  if (newBubble) {
+    speechBubbles.push(newBubble);
+    
+    // Füge Nachricht auch zum Chat hinzu
+    const chatMessage = {
+      participant: speaker,
+      message: newBubble.text,
+      isShouting: newBubble.isShouting,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    chatMessages.push(chatMessage);
+    if (chatMessages.length > 50) chatMessages.shift();
+    updateChatDisplay();
+  }
+  
+  // Continue discussion after a random time
+  const delay = 0.5 + Math.random() * 2;
+  setTimeout(startDiscussion, delay * 1000);
+}
+
+// Calculate appropriate size for speech bubble based on text content
+function calculateBubbleSize(content) {
+  // Set text properties to measure width accurately
+  textSize(12);
+  textStyle(NORMAL);
+  
+  // Get basic text width
+  const rawWidth = textWidth(content);
+  
+  // Calculate height based on width and approximate character count
+  // Use wrapped text height calculation
+  const maxWidth = min(200, rawWidth + 40); // Max width with padding, limit to 200px
+  const lineHeight = 16;
+  
+  // Approximate number of lines based on word wrapping
+  let numLines = 1;
+  let words = content.split(' ');
+  let currentLine = '';
+  
+  for (let word of words) {
+    let testLine = currentLine ? currentLine + ' ' + word : word;
+    let testLineWidth = textWidth(testLine);
+    if (testLineWidth > maxWidth - 40) { // Account for padding
+      currentLine = word;
+      numLines++;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  
+  // Calculate height based on number of lines
+  const height = numLines * lineHeight + 20; // Add padding
+  
+  return {
+    width: maxWidth,
+    height: height
+  };
+}
+
+// Helper function to get a random phrase from an array
+function getRandomPhrase(phrasesArray) {
+  if (!phrasesArray || !Array.isArray(phrasesArray) || phrasesArray.length === 0) {
+    return "..."; // Return a default phrase if input is invalid
+  }
+  return phrasesArray[Math.floor(Math.random() * phrasesArray.length)];
+}
+
+// Funktion zum Anzeigen von Chat-Nachrichten
+function displayChatMessage(text) {
+  // Format current time HH:MM
+  const now = new Date();
+  const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                     now.getMinutes().toString().padStart(2, '0');
+  
+  // Einfaches Objekt für Chat-Nachricht erstellen
+  const chatMessage = {
+    content: text,
+    time: timeString,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
   
-  // Zum Chat-Verlauf hinzufügen
-  displayChatMessage(bubble.text);
+  // Zur Chat-Nachrichtenliste hinzufügen
+  chatMessages.push(chatMessage);
   
-  // Zur Sprechblasen-Liste hinzufügen
-  speechBubbles.push(bubble);
-} 
+  // Begrenze die Chat-Historie auf 50 Nachrichten
+  if (chatMessages.length > 50) {
+    chatMessages.shift();
+  }
+  
+  // Chat-Anzeige aktualisieren
+  updateChatDisplay();
+}
