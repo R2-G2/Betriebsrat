@@ -28,6 +28,7 @@ const CONSUMPTION_CHANCE = 0.001; // Chance a participant consumes something
 const KOKS_CONSUMPTION_CHANCE = 0.003; // Higher chance for Koks consumption
 const REFILL_DURATION = 3000; // How long the waitress stays to refill
 const WAITRESS_INTERVAL = 15000; // Minimum time between waitress appearances
+const KOKS_REFILL_INTERVAL = 8000; // Shorter interval for Koks refills only
 
 // State variables
 let isHeatedDiscussion = false;
@@ -224,23 +225,38 @@ function createTableDecorations() {
     });
   }
   
-  // Create "Koks" (white lines) in one corner of the table
-  tableDecorations.push({
-    type: 'koks',
-    x: table.x + table.width * 0.2,
-    y: table.y - table.height * 0.1,
-    lines: [],
-    consumed: false,
-    consumptionLevel: 1.0
-  });
+  // Create multiple "Koks" (white lines) spots around the table
+  const koksPositions = [
+    { x: table.x + table.width * 0.2, y: table.y - table.height * 0.1 }, // Original position
+    { x: table.x - table.width * 0.2, y: table.y - table.height * 0.1 }, // Left side
+    { x: table.x, y: table.y + table.height * 0.15 },                    // Bottom center
+    { x: table.x + table.width * 0.3, y: table.y + table.height * 0.1 }, // Bottom right
+    { x: table.x - table.width * 0.3, y: table.y + table.height * 0.1 }  // Bottom left
+  ];
   
-  // Add a few lines with slight variations
-  for (let i = 0; i < 3; i++) {
-    tableDecorations[tableDecorations.length - 1].lines.push({
-      length: random(15, 25),
-      angle: random(-0.1, 0.1),
-      offset: i * 8
-    });
+  // Create multiple Koks locations around the table
+  for (let pos of koksPositions) {
+    let koksItem = {
+      type: 'koks',
+      x: pos.x,
+      y: pos.y,
+      lines: [],
+      consumed: false,
+      consumptionLevel: 1.0,
+      priority: random() < 0.3 // Some Koks piles are higher priority (premium quality)
+    };
+    
+    // Add variable number of lines per spot (2-4)
+    const lineCount = floor(random(2, 5));
+    for (let i = 0; i < lineCount; i++) {
+      koksItem.lines.push({
+        length: random(15, 25),
+        angle: random(-0.15, 0.15),
+        offset: i * 7
+      });
+    }
+    
+    tableDecorations.push(koksItem);
   }
 }
 
@@ -273,6 +289,29 @@ function draw() {
   }
   
   // Update and draw participants
+  updateParticipants();
+  
+  // Update and draw waitress if visible
+  if (waitress.isVisible) {
+    updateWaitress();
+    drawWaitress();
+  } else {
+    // Check if any Koks needs quick refill (priority refill)
+    if (millis() - lastRefillTime > KOKS_REFILL_INTERVAL) {
+      checkForKoksRefill();
+    }
+    // Regular refill check for any item
+    else if (millis() - lastRefillTime > WAITRESS_INTERVAL) {
+      checkForRefill();
+    }
+  }
+  
+  // Update and draw speech bubbles
+  updateSpeechBubbles();
+}
+
+// Update and draw participants
+function updateParticipants() {
   for (let i = 0; i < participants.length; i++) {
     updateParticipant(participants[i], i);
     drawParticipant(participants[i]);
@@ -294,18 +333,6 @@ function draw() {
       consumeRandomItem(i);
     }
   }
-  
-  // Update and draw waitress if visible
-  if (waitress.isVisible) {
-    updateWaitress();
-    drawWaitress();
-  } else if (millis() - lastRefillTime > WAITRESS_INTERVAL) {
-    // Check if it's time for the waitress to appear
-    checkForRefill();
-  }
-  
-  // Update and draw speech bubbles
-  updateSpeechBubbles();
 }
 
 // Function to specifically consume an item of a certain type
@@ -380,9 +407,54 @@ function consumeSpecificItem(participantIndex, itemType) {
   return true;
 }
 
+// Check specifically if Koks needs refilling
+function checkForKoksRefill() {
+  // Count consumed Koks items
+  const consumedKoks = tableDecorations.filter(item => 
+    item.type === 'koks' && (item.consumed || item.consumptionLevel <= 0.6)
+  );
+  
+  // If any Koks needs refill, make waitress appear immediately
+  if (consumedKoks.length > 0) {
+    // Make waitress appear from right side of screen (faster entrance)
+    waitress.isVisible = true;
+    waitress.x = width + 50;
+    waitress.y = height / 3;
+    waitress.targetX = table.x;
+    waitress.targetY = table.y - table.height;
+    waitress.speed = 5; // Faster speed for Koks refills
+    
+    // Give her extra Koks
+    waitress.tray.items = [];
+    waitress.tray.hasExtraKoks = true; 
+    
+    // Add high priority consumed items to her tray
+    tableDecorations.forEach(item => {
+      if (item.type === 'koks' && (item.consumed || item.consumptionLevel <= 0.6)) {
+        waitress.tray.items.push('koks');
+      }
+    });
+    
+    // Make sure she has at least 3 Koks refills
+    while (waitress.tray.items.length < 3) {
+      waitress.tray.items.push('koks');
+    }
+  }
+}
+
 // Check if waitress should appear to refill items
 function checkForRefill() {
-  // Count consumed items
+  // First check if Koks needs refilling, prioritize that
+  const consumedKoks = tableDecorations.filter(item => 
+    item.type === 'koks' && (item.consumed || item.consumptionLevel <= 0.6)
+  );
+  
+  if (consumedKoks.length > 0) {
+    checkForKoksRefill();
+    return;
+  }
+  
+  // Count other consumed items
   const consumedCount = tableDecorations.filter(item => 
     item.consumed || item.consumptionLevel <= 0.3
   ).length;
@@ -395,81 +467,16 @@ function checkForRefill() {
     waitress.y = height / 2;
     waitress.targetX = table.x;
     waitress.targetY = table.y - table.height;
+    waitress.speed = 3; // Normal speed
     
     // Fill waitress tray with replacements
     waitress.tray.items = [];
+    waitress.tray.hasExtraKoks = false;
     tableDecorations.forEach(item => {
       if (item.consumed || item.consumptionLevel <= 0.3) {
         waitress.tray.items.push(item.type);
       }
     });
-  }
-}
-
-// Update waitress position and state
-function updateWaitress() {
-  // Move towards target
-  const dx = waitress.targetX - waitress.x;
-  const dy = waitress.targetY - waitress.y;
-  const distance = sqrt(dx * dx + dy * dy);
-  
-  if (distance > waitress.speed) {
-    waitress.x += dx * waitress.speed / distance;
-    waitress.y += dy * waitress.speed / distance;
-  } else {
-    waitress.x = waitress.targetX;
-    waitress.y = waitress.targetY;
-    
-    // If reached target and not yet refilling
-    if (waitress.refillTarget === null && waitress.x === table.x) {
-      waitress.refillStartTime = millis();
-      waitress.refillTarget = 'table';
-      
-      // Prioritize refilling Koks if it's consumed
-      const koksItems = tableDecorations.filter(item => 
-        item.type === 'koks' && (item.consumed || item.consumptionLevel <= 0.5)
-      );
-      
-      if (koksItems.length > 0) {
-        // Special restocking animation for Koks
-        for (let koksItem of koksItems) {
-          koksItem.consumed = false;
-          koksItem.consumptionLevel = 1.0;
-          
-          // Create a highlight effect around the Koks
-          const fadeEffect = {
-            x: koksItem.x,
-            y: koksItem.y,
-            createdAt: millis(),
-            duration: 1000
-          };
-          
-          // Could implement a fade effect here
-        }
-      }
-    }
-    
-    // If refilling is complete
-    if (waitress.refillTarget && millis() - waitress.refillStartTime > REFILL_DURATION) {
-      // Refill all consumed items
-      tableDecorations.forEach(item => {
-        if (item.consumed || item.consumptionLevel <= 0.3) {
-          item.consumed = false;
-          item.consumptionLevel = 1.0;
-        }
-      });
-      
-      // Leave the scene
-      waitress.refillTarget = null;
-      waitress.targetX = width + 100;
-      waitress.targetY = height / 2;
-    }
-    
-    // If left the scene
-    if (waitress.x > width + 50 || waitress.x < -50) {
-      waitress.isVisible = false;
-      lastRefillTime = millis();
-    }
   }
 }
 
@@ -486,7 +493,7 @@ function drawWaitress() {
     
     // Items on tray
     let itemCount = waitress.tray.items.length;
-    for (let i = 0; i < itemCount && i < 3; i++) {
+    for (let i = 0; i < itemCount && i < 4; i++) {
       const itemType = waitress.tray.items[i];
       const xOffset = (i - itemCount/2 + 0.5) * 15;
       
@@ -502,6 +509,29 @@ function drawWaitress() {
       } else if (itemType === 'fruitBowl') {
         fill('#FFD700');
         ellipse(xOffset, 25, 8, 8);
+      } else if (itemType === 'koks') {
+        // Special display for Koks on the tray
+        fill(255);
+        rectMode(CENTER);
+        rect(xOffset, 25, 12, 8, 1);
+        
+        // Small lines on top
+        stroke(255);
+        strokeWeight(2);
+        line(xOffset - 3, 21, xOffset + 3, 21);
+        noStroke();
+      }
+    }
+    
+    // Extra bag of Koks if she's on a Koks refill mission
+    if (waitress.tray.hasExtraKoks) {
+      fill(255);
+      rect(20, 15, 15, 10, 2);
+      // Small powder effect
+      noStroke();
+      fill(255, 255, 255, 200);
+      for (let i = 0; i < 5; i++) {
+        ellipse(20 + random(-5, 5), 12 + random(-3, 3), 2, 2);
       }
     }
   }
@@ -518,16 +548,27 @@ function drawWaitress() {
   fill(waitress.hairColor);
   arc(0, -30, 30, 25, PI, TWO_PI);
   
-  // Eyes with winky effect
+  // Eyes with winky effect for Koks refills
   fill(0);
-  ellipse(-5, -25, 3, floor(frameCount/20) % 5 == 0 ? 1 : 3);
-  ellipse(5, -25, 3, 3);
+  if (waitress.tray.hasExtraKoks) {
+    // More frequent winking for Koks
+    ellipse(-5, -25, 3, floor(frameCount/12) % 3 == 0 ? 1 : 3);
+    ellipse(5, -25, 3, floor(frameCount/15) % 4 == 0 ? 1 : 3);
+  } else {
+    // Normal winking
+    ellipse(-5, -25, 3, floor(frameCount/20) % 5 == 0 ? 1 : 3);
+    ellipse(5, -25, 3, 3);
+  }
   
-  // Smile
+  // Smile - bigger smile for Koks refills
   noFill();
   stroke(0);
   strokeWeight(1);
-  arc(0, -20, 12, 8, 0, PI);
+  if (waitress.tray.hasExtraKoks) {
+    arc(0, -20, 15, 10, 0, PI);
+  } else {
+    arc(0, -20, 12, 8, 0, PI);
+  }
   noStroke();
   
   // Arms
@@ -552,210 +593,85 @@ function drawWaitress() {
   pop();
 }
 
-// Draw all table decorations
-function drawTableDecorations() {
-  for (let deco of tableDecorations) {
-    push();
+// Update waitress position and state
+function updateWaitress() {
+  // Move towards target
+  const dx = waitress.targetX - waitress.x;
+  const dy = waitress.targetY - waitress.y;
+  const distance = sqrt(dx * dx + dy * dy);
+  
+  if (distance > waitress.speed) {
+    waitress.x += dx * waitress.speed / distance;
+    waitress.y += dy * waitress.speed / distance;
+  } else {
+    waitress.x = waitress.targetX;
+    waitress.y = waitress.targetY;
     
-    // Don't draw fully consumed items
-    if (deco.consumed) {
-      pop();
-      continue;
-    }
-    
-    switch (deco.type) {
-      case 'water':
-        drawWaterBottle(deco);
-        break;
-      case 'fruitBowl':
-        drawFruitBowl(deco);
-        break;
-      case 'cola':
-        drawColaCan(deco);
-        break;
-      case 'coffee':
-        drawCoffeeCup(deco);
-        break;
-      case 'koks':
-        drawKoksLines(deco);
-        break;
-    }
-    
-    pop();
-  }
-}
-
-// Draw a water bottle
-function drawWaterBottle(bottle) {
-  push();
-  translate(bottle.x, bottle.y);
-  rotate(bottle.rotation);
-  
-  // Bottle body
-  fill(bottle.color);
-  rect(0, 0, bottle.width, bottle.height, 2, 2, 2, 2);
-  
-  // Bottle cap
-  fill('#A9A9A9'); // Gray for cap
-  rect(0, -bottle.height/2 - 5, 10, 5, 1);
-  
-  // Water level - adjusted by consumption
-  fill('#D6EAF8'); // Light blue with some transparency
-  const waterHeight = (bottle.height - 8) * bottle.consumptionLevel;
-  rect(0, bottle.height/2 - waterHeight/2 - 2, bottle.width - 4, waterHeight, 1);
-  
-  // Highlight
-  stroke(255, 255, 255, 100);
-  strokeWeight(1);
-  line(-bottle.width/3, -bottle.height/3, -bottle.width/3, bottle.height/3);
-  
-  pop();
-}
-
-// Draw a fruit bowl with fruits
-function drawFruitBowl(bowl) {
-  push();
-  translate(bowl.x, bowl.y);
-  
-  // Bowl
-  fill(bowl.color);
-  ellipse(0, 0, bowl.radius * 2, bowl.radius * 0.7);
-  
-  // Bowl rim (3D effect)
-  noFill();
-  stroke(lerpColor(color(bowl.color), color(0), 0.3));
-  strokeWeight(2);
-  ellipse(0, 0, bowl.radius * 2, bowl.radius * 0.7);
-  
-  // Fruits inside bowl - adjust count based on consumption
-  const fruitCount = Math.ceil(bowl.fruits.length * bowl.consumptionLevel);
-  for (let i = 0; i < fruitCount; i++) {
-    const fruit = bowl.fruits[i];
-    fill(fruit.color);
-    noStroke();
-    ellipse(fruit.x, fruit.y, fruit.radius * 2, fruit.radius * 2);
-    
-    // Highlight on fruit
-    fill(255, 255, 255, 80);
-    ellipse(fruit.x - fruit.radius * 0.3, fruit.y - fruit.radius * 0.3, fruit.radius * 0.7, fruit.radius * 0.7);
-  }
-  
-  pop();
-}
-
-// Draw a cola can
-function drawColaCan(can) {
-  push();
-  translate(can.x, can.y);
-  rotate(can.rotation);
-  
-  // Can body
-  fill(can.color);
-  rect(0, 0, can.width, can.height, 2, 2, 0, 0);
-  
-  // Can top
-  fill('#A9A9A9'); // Gray for top
-  rect(0, -can.height/2 - 3, can.width, 6, 2, 2, 0, 0);
-  
-  // Label (simplified)
-  fill(255);
-  textSize(6); // Smaller text size (was 8)
-  textAlign(CENTER, CENTER);
-  textStyle(BOLD);
-  text("COLA", 0, 0);
-  
-  // Show consumption by tilting the can if partially consumed
-  if (can.consumptionLevel < 0.9) {
-    rotate(PI/6 * (1 - can.consumptionLevel));
-  }
-  
-  // Highlight
-  stroke(255, 255, 255, 100);
-  strokeWeight(1);
-  line(-can.width/3, -can.height/3, -can.width/3, can.height/3);
-  
-  pop();
-}
-
-// Draw a coffee cup with steam
-function drawCoffeeCup(cup) {
-  push();
-  translate(cup.x, cup.y);
-  
-  // Cup
-  fill('#FFF');
-  arc(0, 0, cup.radius * 2, cup.radius * 2, 0, PI, CHORD);
-  
-  // Coffee inside - adjust level based on consumption
-  fill(cup.color);
-  const coffeeHeight = cup.radius * 1.7 * cup.consumptionLevel;
-  arc(0, cup.radius - coffeeHeight/2, cup.radius * 1.8, coffeeHeight, 0, PI, CHORD);
-  
-  // Cup handle
-  noFill();
-  stroke('#FFF');
-  strokeWeight(3);
-  arc(cup.radius * 0.8, 0, cup.radius, cup.radius * 1.5, -HALF_PI, HALF_PI);
-  
-  // Steam only if coffee is hot (not too consumed)
-  if (cup.consumptionLevel > 0.4) {
-    noFill();
-    stroke(255, 255, 255, 150 * cup.consumptionLevel); // Fade steam as coffee is consumed
-    strokeWeight(1);
-    
-    for (let i = 0; i < 3; i++) {
-      let xOffset = i * 5 - 5;
-      let phase = cup.steamPhase + i * 0.5;
-      beginShape();
-      for (let y = 0; y > -20 * cup.consumptionLevel; y -= 2) {
-        let x = xOffset + sin((frameCount * 0.05) + phase + (y * 0.3)) * 3;
-        curveVertex(x, y);
+    // If reached target and not yet refilling
+    if (waitress.refillTarget === null && waitress.x === table.x) {
+      waitress.refillStartTime = millis();
+      waitress.refillTarget = 'table';
+      
+      // Prioritize refilling Koks if it's consumed
+      const koksItems = tableDecorations.filter(item => 
+        item.type === 'koks' && (item.consumed || item.consumptionLevel <= 0.6)
+      );
+      
+      if (koksItems.length > 0) {
+        // Refill all Koks immediately
+        for (let koksItem of koksItems) {
+          koksItem.consumed = false;
+          koksItem.consumptionLevel = 1.0;
+          
+          // Create a highlight effect around the Koks
+          const fadeEffect = {
+            x: koksItem.x,
+            y: koksItem.y,
+            createdAt: millis(),
+            duration: 1000
+          };
+          
+          // Also replenish any other low Koks spots
+          tableDecorations.forEach(item => {
+            if (item.type === 'koks' && item.consumptionLevel < 1.0) {
+              item.consumptionLevel = 1.0;
+            }
+          });
+        }
+        
+        // If this was a Koks-specific refill, leave more quickly
+        if (waitress.tray.hasExtraKoks) {
+          waitress.refillStartTime -= 1000; // Reduce refill time by 1 second
+        }
       }
-      endShape();
+    }
+    
+    // If refilling is complete
+    if (waitress.refillTarget && millis() - waitress.refillStartTime > REFILL_DURATION) {
+      // Refill all consumed items
+      tableDecorations.forEach(item => {
+        if (item.consumed || item.consumptionLevel <= 0.3) {
+          item.consumed = false;
+          item.consumptionLevel = 1.0;
+        }
+      });
+      
+      // Leave the scene
+      waitress.refillTarget = null;
+      
+      // Leave in the opposite direction from entry
+      if (waitress.x === table.x) {
+        waitress.targetX = waitress.x < width/2 ? width + 100 : -100;
+        waitress.targetY = height / 2;
+      }
+    }
+    
+    // If left the scene
+    if (waitress.x > width + 50 || waitress.x < -50) {
+      waitress.isVisible = false;
+      lastRefillTime = millis();
     }
   }
-  
-  pop();
-}
-
-// Draw the "Koks" lines
-function drawKoksLines(koks) {
-  push();
-  translate(koks.x, koks.y);
-  
-  // Small mirror or card surface
-  fill(200, 200, 200, 150);
-  noStroke();
-  rect(0, 0, 30, 20, 2);
-  
-  // White lines - adjust based on consumption
-  stroke(255);
-  strokeWeight(2);
-  strokeCap(ROUND);
-  
-  // Only draw lines based on consumption level
-  const visibleLines = Math.ceil(koks.lines.length * koks.consumptionLevel);
-  for (let i = 0; i < visibleLines; i++) {
-    const kokeLine = koks.lines[i];
-    push();
-    translate(-10 + kokeLine.offset, 0);
-    rotate(kokeLine.angle);
-    // Adjust line length based on consumption
-    const lineLength = kokeLine.length * koks.consumptionLevel;
-    line(0, -5, 0, -5 - lineLength);
-    pop();
-  }
-  
-  // Credit card nearby
-  fill(70, 130, 180); // Steel blue
-  noStroke();
-  rect(20, 10, 15, 10, 1);
-  
-  // Card stripe
-  fill(50);
-  rect(20, 12, 15, 2);
-  
-  pop();
 }
 
 // Update participant position with subtle movements
