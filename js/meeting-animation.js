@@ -378,6 +378,44 @@ function createSpeechBubble(participantIndex) {
   return true;
 }
 
+// Calculate appropriate size for speech bubble based on text content
+function calculateBubbleSize(content) {
+  // Set text properties to measure width accurately
+  textSize(12);
+  textStyle(NORMAL);
+  
+  // Get basic text width
+  const rawWidth = textWidth(content);
+  
+  // Calculate height based on width and approximate character count
+  // Use wrapped text height calculation
+  const maxWidth = min(200, rawWidth + 40); // Max width with padding, limit to 200px
+  const lineHeight = 16;
+  
+  // Approximate number of lines based on word wrapping
+  let numLines = 1;
+  let words = content.split(' ');
+  let currentLine = '';
+  
+  for (let word of words) {
+    let testLine = currentLine ? currentLine + ' ' + word : word;
+    if (textWidth(testLine) > maxWidth - 40) { // Account for padding
+      currentLine = word;
+      numLines++;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  
+  // Calculate height based on number of lines
+  const height = numLines * lineHeight + 20; // Add padding
+  
+  return {
+    width: maxWidth,
+    height: height
+  };
+}
+
 // Update and draw speech bubbles
 function updateSpeechBubbles() {
   // Create a copy of the array to safely remove items while iterating
@@ -395,6 +433,9 @@ function updateSpeechBubbles() {
     const p = participants[bubble.participantIndex];
     bubble.x = p.x;
     bubble.y = p.y - p.size - 30;
+    
+    // Calculate appropriate bubble size for the text
+    const bubbleSize = calculateBubbleSize(bubble.content);
     
     // Calculate opacity for fade in/out effect
     let opacity = 1;
@@ -417,9 +458,8 @@ function updateSpeechBubbles() {
       stroke(255, 100, 100, 200 * opacity);
       strokeWeight(3 * pulseAmount);
       
-      // Make shouting bubbles larger
-      const shouting_size = textWidth(bubble.content) + 35;
-      ellipse(bubble.x, bubble.y, shouting_size, 40);
+      // Make shouting bubbles larger with dynamic sizing
+      ellipse(bubble.x, bubble.y, bubbleSize.width * 1.1, bubbleSize.height * 1.2);
     }
     // Special styling for new topics
     else if (bubble.isNewTopic) {
@@ -429,23 +469,23 @@ function updateSpeechBubbles() {
       stroke(255, 200, 0, 150 * opacity); // Golden border
       strokeWeight(2);
       
-      // Bubble
-      ellipse(bubble.x, bubble.y, textWidth(bubble.content) + 20, 30);
+      // Bubble with dynamic sizing
+      ellipse(bubble.x, bubble.y, bubbleSize.width, bubbleSize.height);
     } else {
       // Normal bubble
       fill(255, 255, 255, 255 * opacity);
       stroke(0, 0, 0, 100 * opacity);
       strokeWeight(1);
       
-      // Bubble
-      ellipse(bubble.x, bubble.y, textWidth(bubble.content) + 20, 30);
+      // Bubble with dynamic sizing
+      ellipse(bubble.x, bubble.y, bubbleSize.width, bubbleSize.height);
     }
     
     // Pointer to participant
     triangle(
-      bubble.x, bubble.y + 15,
-      bubble.x - 10, bubble.y + 30,
-      bubble.x + 10, bubble.y + 30
+      bubble.x, bubble.y + bubbleSize.height/2 - 5,
+      bubble.x - 10, bubble.y + bubbleSize.height/2 + 10,
+      bubble.x + 10, bubble.y + bubbleSize.height/2 + 10
     );
     
     // Text
@@ -464,7 +504,11 @@ function updateSpeechBubbles() {
       textSize(12);
     }
     
-    text(bubble.content, bubble.x, bubble.y);
+    // Draw text within the bubble's boundaries
+    const textAreaWidth = bubbleSize.width - 30;
+    const textAreaHeight = bubbleSize.height - 20;
+    text(bubble.content, bubble.x, bubble.y - 2, textAreaWidth, textAreaHeight);
+    
     pop();
     
     bubblesToKeep.push(bubble);
@@ -529,6 +573,7 @@ function drawSpeechBubble(speechBubble) {
   speechBubble.x = p.x;
   speechBubble.y = p.y - p.size - 30;
   
+  // Use our improved calculateBubbleSize function
   const bubbleSize = calculateBubbleSize(speechBubble.content);
   
   push();
@@ -561,9 +606,9 @@ function drawSpeechBubble(speechBubble) {
     fill(redIntensity, 200, 200, alpha);
     stroke(255, 100, 100, alpha);
     strokeWeight(4);
-    // Make shouting bubbles larger with jagged edges
-    const enlargeFactor = 1.4;
-    rect(-bubbleSize.width/2 * enlargeFactor, -bubbleSize.height * enlargeFactor, 
+    // Make shouting bubbles larger with dynamic sizing
+    const enlargeFactor = 1.2;
+    rect(-bubbleSize.width/2 * enlargeFactor, -bubbleSize.height/2 * enlargeFactor, 
          bubbleSize.width * enlargeFactor, bubbleSize.height * enlargeFactor, 
          8, 8, 8, 8);
          
@@ -583,13 +628,13 @@ function drawSpeechBubble(speechBubble) {
     fill(230, 255, 230, alpha);
     stroke(180, 255, 180, alpha);
     strokeWeight(2);
-    rect(-bubbleSize.width/2, -bubbleSize.height, bubbleSize.width, bubbleSize.height, 10, 10, 10, 10);
+    rect(-bubbleSize.width/2, -bubbleSize.height/2, bubbleSize.width, bubbleSize.height, 10, 10, 10, 10);
   } else {
     // Regular speech
     fill(255, 255, 255, alpha);
     stroke(200, 200, 200, alpha);
     strokeWeight(1);
-    rect(-bubbleSize.width/2, -bubbleSize.height, bubbleSize.width, bubbleSize.height, 10, 10, 10, 10);
+    rect(-bubbleSize.width/2, -bubbleSize.height/2, bubbleSize.width, bubbleSize.height, 10, 10, 10, 10);
   }
   
   // Add the speech bubble tail
@@ -601,7 +646,7 @@ function drawSpeechBubble(speechBubble) {
   }
   
   noStroke();
-  triangle(-10, 0, 10, 0, 0, 15);
+  triangle(-10, bubbleSize.height/2, 10, bubbleSize.height/2, 0, bubbleSize.height/2 + 15);
   
   // Text
   if (speechBubble.isShouting) {
@@ -616,7 +661,10 @@ function drawSpeechBubble(speechBubble) {
   }
   
   textAlign(CENTER, CENTER);
-  text(speechBubble.content, 0, -bubbleSize.height / 2 - 5, bubbleSize.width - 20, bubbleSize.height - 20);
+  // Draw text within the bubble's boundaries
+  const textAreaWidth = bubbleSize.width - 20;
+  const textAreaHeight = bubbleSize.height - 20;
+  text(speechBubble.content, 0, 0, textAreaWidth, textAreaHeight);
   
   pop();
   
