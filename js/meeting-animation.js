@@ -6,6 +6,7 @@ let participants = [];
 let table;
 let chairs = [];
 let speechBubbles = [];
+let tableDecorations = []; // Added table decorations array
 // meetingTopics and participantPhrases are loaded from external JS files
 
 // Config constants
@@ -14,12 +15,12 @@ const TABLE_COLOR = "#8B4513";
 const CHAIR_COLOR = "#A0522D";
 const PARTICIPANT_COLORS = ["#FFB6C1", "#ADD8E6", "#90EE90", "#FFFFE0", "#D8BFD8", "#FFA07A", "#87CEEB", "#98FB98"];
 const PARTICIPANT_COUNT = 10;
-const SPEECH_BUBBLE_DURATION = 3000; // milliseconds
-const SPEECH_CHANCE = 0.01; // probability per frame that a participant speaks
-const NEW_TOPIC_HIGHLIGHT_DURATION = 5000; // duration to highlight new topics
-const SHOUTING_CHANCE = 0.3; // probability that a speech will be shouting
-const HEATED_DISCUSSION_CHANCE = 0.05; // chance that a shouting will trigger heated discussion
-const HEATED_DISCUSSION_DURATION = 10000; // duration of heated discussion in ms
+const SPEECH_BUBBLE_DURATION = 2000; // milliseconds - reduced from 3000 to 2000
+const SPEECH_CHANCE = 0.03; // probability per frame that a participant speaks - increased from 0.01 to 0.03
+const NEW_TOPIC_HIGHLIGHT_DURATION = 3500; // duration to highlight new topics - reduced from 5000 to 3500
+const SHOUTING_CHANCE = 0.4; // probability that a speech will be shouting - increased from 0.35 to 0.4
+const HEATED_DISCUSSION_CHANCE = 0.15; // chance that a shouting will trigger heated discussion - increased from 0.05 to 0.15
+const HEATED_DISCUSSION_DURATION = 7000; // duration of heated discussion in ms - reduced from 10000 to 7000
 
 // State variables
 let isHeatedDiscussion = false;
@@ -47,6 +48,9 @@ function setup() {
   
   // Create participants sitting on chairs
   createParticipants();
+  
+  // Create table decorations
+  createTableDecorations();
   
   // Set frame rate
   frameRate(30);
@@ -113,6 +117,76 @@ function createParticipants() {
   }
 }
 
+// Create table decorations - drinks, fruit, and "koks" (cola)
+function createTableDecorations() {
+  tableDecorations = [];
+  
+  // Create water bottles
+  for (let i = 0; i < 5; i++) {
+    tableDecorations.push({
+      type: 'water',
+      x: table.x - table.width * 0.3 + i * (table.width * 0.6 / 4),
+      y: table.y - table.height * 0.2,
+      width: 15,
+      height: 30,
+      color: '#D6EAF8', // Light blue for water
+      rotation: random(-0.1, 0.1)
+    });
+  }
+  
+  // Create fruit bowl
+  tableDecorations.push({
+    type: 'fruitBowl',
+    x: table.x,
+    y: table.y,
+    radius: 40,
+    color: '#E59866', // Brown for bowl
+    fruits: []
+  });
+  
+  // Add fruits to the bowl
+  const fruitColors = ['#FF6347', '#FFD700', '#228B22', '#FF4500']; // Red, yellow, green, orange
+  for (let i = 0; i < 8; i++) {
+    tableDecorations[tableDecorations.length - 1].fruits.push({
+      x: random(-20, 20),
+      y: random(-20, 20),
+      radius: random(8, 12),
+      color: fruitColors[floor(random(fruitColors.length))]
+    });
+  }
+  
+  // Create cola cans
+  const colaPositions = [
+    { x: table.x - table.width * 0.25, y: table.y + table.height * 0.15 },
+    { x: table.x + table.width * 0.25, y: table.y + table.height * 0.15 },
+    { x: table.x, y: table.y - table.height * 0.2 }
+  ];
+  
+  for (let pos of colaPositions) {
+    tableDecorations.push({
+      type: 'cola',
+      x: pos.x,
+      y: pos.y,
+      width: 18,
+      height: 25,
+      color: '#E74C3C', // Red for cola cans
+      rotation: random(-0.2, 0.2)
+    });
+  }
+  
+  // Create coffee cups
+  for (let i = 0; i < 3; i++) {
+    tableDecorations.push({
+      type: 'coffee',
+      x: table.x - table.width * 0.3 + i * table.width * 0.3,
+      y: table.y + table.height * 0.1,
+      radius: 12,
+      color: '#784212', // Brown for coffee
+      steamPhase: random(TWO_PI)
+    });
+  }
+}
+
 // Main p5.js draw function - called every frame
 function draw() {
   // Draw room
@@ -122,6 +196,9 @@ function draw() {
   fill(TABLE_COLOR);
   rectMode(CENTER);
   rect(table.x, table.y, table.width, table.height, 10);
+  
+  // Draw table decorations
+  drawTableDecorations();
   
   // Draw chairs
   fill(CHAIR_COLOR);
@@ -145,7 +222,7 @@ function draw() {
     
     // Random chance for a participant to speak
     if (random() < (isHeatedDiscussion ? SPEECH_CHANCE * 3 : SPEECH_CHANCE) && 
-        millis() - participants[i].lastSpoke > SPEECH_BUBBLE_DURATION * 1.5) {
+        millis() - participants[i].lastSpoke > SPEECH_BUBBLE_DURATION * 0.8) {
       createSpeechBubble(i);
       participants[i].lastSpoke = millis();
     }
@@ -153,6 +230,152 @@ function draw() {
   
   // Update and draw speech bubbles
   updateSpeechBubbles();
+}
+
+// Draw all table decorations
+function drawTableDecorations() {
+  for (let deco of tableDecorations) {
+    push();
+    
+    switch (deco.type) {
+      case 'water':
+        drawWaterBottle(deco);
+        break;
+      case 'fruitBowl':
+        drawFruitBowl(deco);
+        break;
+      case 'cola':
+        drawColaCan(deco);
+        break;
+      case 'coffee':
+        drawCoffeeCup(deco);
+        break;
+    }
+    
+    pop();
+  }
+}
+
+// Draw a water bottle
+function drawWaterBottle(bottle) {
+  push();
+  translate(bottle.x, bottle.y);
+  rotate(bottle.rotation);
+  
+  // Bottle body
+  fill(bottle.color);
+  rect(0, 0, bottle.width, bottle.height, 2, 2, 2, 2);
+  
+  // Bottle cap
+  fill('#A9A9A9'); // Gray for cap
+  rect(0, -bottle.height/2 - 5, 10, 5, 1);
+  
+  // Water level
+  fill('#D6EAF8'); // Light blue with some transparency
+  rect(0, 2, bottle.width - 4, bottle.height - 8, 1);
+  
+  // Highlight
+  stroke(255, 255, 255, 100);
+  strokeWeight(1);
+  line(-bottle.width/3, -bottle.height/3, -bottle.width/3, bottle.height/3);
+  
+  pop();
+}
+
+// Draw a fruit bowl with fruits
+function drawFruitBowl(bowl) {
+  push();
+  translate(bowl.x, bowl.y);
+  
+  // Bowl
+  fill(bowl.color);
+  ellipse(0, 0, bowl.radius * 2, bowl.radius * 0.7);
+  
+  // Bowl rim (3D effect)
+  noFill();
+  stroke(lerpColor(color(bowl.color), color(0), 0.3));
+  strokeWeight(2);
+  ellipse(0, 0, bowl.radius * 2, bowl.radius * 0.7);
+  
+  // Fruits inside bowl
+  for (let fruit of bowl.fruits) {
+    fill(fruit.color);
+    noStroke();
+    ellipse(fruit.x, fruit.y, fruit.radius * 2, fruit.radius * 2);
+    
+    // Highlight on fruit
+    fill(255, 255, 255, 80);
+    ellipse(fruit.x - fruit.radius * 0.3, fruit.y - fruit.radius * 0.3, fruit.radius * 0.7, fruit.radius * 0.7);
+  }
+  
+  pop();
+}
+
+// Draw a cola can
+function drawColaCan(can) {
+  push();
+  translate(can.x, can.y);
+  rotate(can.rotation);
+  
+  // Can body
+  fill(can.color);
+  rect(0, 0, can.width, can.height, 2, 2, 0, 0);
+  
+  // Can top
+  fill('#A9A9A9'); // Gray for top
+  rect(0, -can.height/2 - 3, can.width, 6, 2, 2, 0, 0);
+  
+  // Label (simplified)
+  fill(255);
+  textSize(8);
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  text("COLA", 0, 0);
+  
+  // Highlight
+  stroke(255, 255, 255, 100);
+  strokeWeight(1);
+  line(-can.width/3, -can.height/3, -can.width/3, can.height/3);
+  
+  pop();
+}
+
+// Draw a coffee cup with steam
+function drawCoffeeCup(cup) {
+  push();
+  translate(cup.x, cup.y);
+  
+  // Cup
+  fill('#FFF');
+  arc(0, 0, cup.radius * 2, cup.radius * 2, 0, PI, CHORD);
+  
+  // Coffee inside
+  fill(cup.color);
+  arc(0, 0, cup.radius * 1.8, cup.radius * 1.7, 0, PI, CHORD);
+  
+  // Cup handle
+  noFill();
+  stroke('#FFF');
+  strokeWeight(3);
+  arc(cup.radius * 0.8, 0, cup.radius, cup.radius * 1.5, -HALF_PI, HALF_PI);
+  
+  // Steam
+  noFill();
+  stroke(255, 255, 255, 150);
+  strokeWeight(1);
+  
+  for (let i = 0; i < 3; i++) {
+    let xOffset = i * 5 - 5;
+    let phase = cup.steamPhase + i * 0.5;
+    beginShape();
+    for (let y = 0; y > -20; y -= 2) {
+      let x = xOffset + sin((frameCount * 0.05) + phase + (y * 0.3)) * 3;
+      curveVertex(x, y);
+    }
+    endShape();
+  }
+  
+  pop();
 }
 
 // Update participant position with subtle movements
@@ -439,12 +662,12 @@ function updateSpeechBubbles() {
     
     // Calculate opacity for fade in/out effect
     let opacity = 1;
-    if (elapsed < 500) {
+    if (elapsed < 300) { // Faster fade in - reduced from 500 to 300
       // Fade in
-      opacity = map(elapsed, 0, 500, 0, 1);
-    } else if (elapsed > bubble.duration - 500) {
+      opacity = map(elapsed, 0, 300, 0, 1);
+    } else if (elapsed > bubble.duration - 350) { // Faster fade out - reduced from 500 to 350
       // Fade out
-      opacity = map(elapsed, bubble.duration - 500, bubble.duration, 1, 0);
+      opacity = map(elapsed, bubble.duration - 350, bubble.duration, 1, 0);
     }
     
     // Draw the speech bubble
@@ -539,6 +762,9 @@ function windowResized() {
       participants[i].baseY = chairs[i].y;
     }
   }
+  
+  // Recreate table decorations for new table size
+  createTableDecorations();
 }
 
 function startDiscussion() {
