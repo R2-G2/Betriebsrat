@@ -91,6 +91,23 @@ const participantPhrases = [
   "Haben wir eine Versicherung für die Betriebsräder?",
   "Wir sollten Corporate Benefits ausbauen.",
   
+  // Company car and parking phrases
+  "Mein Firmenwagen ist zu klein für meine Position.",
+  "Ein Elektroauto spart langfristig Kosten.",
+  "Die aktuelle Parkplatzsituation ist katastrophal.",
+  "Warum bekommen nur Manager einen Firmenwagen?",
+  "Die CO2-Bilanz unserer Fahrzeugflotte ist bedenklich.",
+  "Wir brauchen mehr Ladestationen für E-Autos.",
+  "Ein Mobilitätsbudget wäre flexibler als Firmenwagen.",
+  "Die Parkplatzordnung muss neu strukturiert werden.",
+  "Können wir ein Carsharing-Modell implementieren?",
+  "Familienfreundliche Parkplätze sollten Priorität haben.",
+  "Die Firmenwagen-Policy ist veraltet.",
+  "Belegbare Parkplätze sind ein wichtiger Benefit.",
+  "Wir sollten die Dienstwagensteuer neu kalkulieren.",
+  "Das Parkleitsystem muss digitalisiert werden.",
+  "Ein nachhaltiges Mobilitätskonzept ist überfällig.",
+  
   // Heated exclamations and argument phrases
   "Das ist kompletter Unsinn!",
   "So kommen wir nie zu einem Ergebnis!",
@@ -162,7 +179,24 @@ const discussionPhrases = [
   "Die Leasingkonditionen sind zu prüfen",
   "Wir sollten eine Fahrgemeinschafts-App einführen",
   "Eine E-Bike-Option wäre zukunftsorientiert",
-  "Mentale Gesundheit ist genauso wichtig"
+  "Mentale Gesundheit ist genauso wichtig",
+  
+  // Car and parking related phrases
+  "Die Parkplatzsituation muss verbessert werden",
+  "Firmenwagen sind ein teurer Benefit",
+  "Elektroautos sind die Zukunft unserer Flotte",
+  "Wir sollten mehr Fahrgemeinschaften fördern",
+  "Ein Parkleitsystem würde viel Zeit sparen",
+  "Die Tiefgarage könnte effizienter genutzt werden",
+  "Poolfahrzeuge sind wirtschaftlicher als persönliche Dienstwagen",
+  "Die Parkplatzverteilung muss gerechter werden",
+  "Ein Mobilitätsbudget ist flexibler als ein Firmenwagen",
+  "Wir sollten einen Shuttle-Service anbieten",
+  "Die CO2-Bilanz unserer Fahrzeugflotte ist zu optimieren",
+  "Ladestationen sind ein wichtiger Mitarbeiter-Benefit",
+  "Die Fahrtkosten-Erstattung sollte überarbeitet werden",
+  "Parken sollte für alle Mitarbeiter kostenfrei sein",
+  "Carsharing ist Teil eines modernen Mobilitätskonzepts"
 ];
 
 // Shouting phrases (displayed in ALL CAPS)
@@ -192,7 +226,21 @@ const shoutingPhrases = [
   "Ich will einen höhenverstellbaren Schreibtisch",
   "Die Fahrradwerkstatt ist nie besetzt",
   "Die Ladestationen sind immer belegt",
-  "Wann kommen endlich die neuen Betriebsräder"
+  "Wann kommen endlich die neuen Betriebsräder",
+  
+  // Car and parking related shouts
+  "Mein Parkplatz wurde schon wieder blockiert",
+  "Ich finde nie einen freien Parkplatz",
+  "Der Firmenwagen ist drei Monate überfällig",
+  "Ich will auch einen Dienstwagen haben",
+  "Die Tiefgarage ist komplett überfüllt",
+  "Warum haben die Manager die besten Parkplätze",
+  "Mein Auto wurde auf dem Firmenparkplatz beschädigt",
+  "Die Ladestation ist wieder defekt",
+  "Ich brauche einen größeren Firmenwagen",
+  "Das Parkplatzmanagement ist eine Katastrophe",
+  "Ich zahle nicht für einen Mitarbeiterparkplatz",
+  "Die neuen E-Autos kommen viel zu spät"
 ];
 
 // Create a unified meetingPhrases object to make it easier to access all phrases

@@ -52,7 +52,24 @@ const meetingTopics = [
   "Eltern-Kind-Büro einrichten",
   "Vergünstigte ÖPNV-Tickets",
   "Betriebsrad statt Firmenwagen",
-  "Ergonomische Büromöbel für alle"
+  "Ergonomische Büromöbel für alle",
+  // Neue Themen zu Firmenwagen und Parkplätzen
+  "Elektro-Firmenwagen für Führungskräfte",
+  "Firmenwagen-Richtlinien überarbeiten",
+  "CO2-Ausgleich für Dienstfahrzeuge",
+  "Carsharing statt fester Firmenwagen",
+  "Poolfahrzeuge für alle Mitarbeiter",
+  "Firmenwagen-Budget als Gehaltsbestandteil",
+  "Dienstwagen oder Mobilitätsbudget?",
+  "Parkplatz-Reservierungen für Fahrgemeinschaften",
+  "Familienfreundliche Parkplätze einrichten",
+  "Frauenparkplätze in der Tiefgarage",
+  "Parkplätze für Elektrofahrzeuge reservieren",
+  "Parkplatzgebühren für Firmenwagen einführen",
+  "Kostenloses Parken für Mitarbeiter",
+  "Parksituation am Standort verbessern",
+  "Parkplatz-Management-System implementieren",
+  "Parkraumbewirtschaftung optimieren"
 ];
 
 // Custom event to signal that a new topic has been added
