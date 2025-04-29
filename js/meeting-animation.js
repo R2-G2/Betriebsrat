@@ -6,12 +6,9 @@
 
 // Versuche, die Phrasen zu laden, wenn das Skript im Browser ausgeführt wird
 document.addEventListener('DOMContentLoaded', function() {
-  // Wir stellen nur sicher, dass die Phrasen geladen sind, deklarieren sie aber nicht neu
-  if (typeof window.GENERAL_PHRASES === 'undefined') {
-    console.warn('GENERAL_PHRASES ist nicht definiert');
-  }
-  if (typeof window.GEN_Z_PHRASES === 'undefined') {
-    console.warn('GEN_Z_PHRASES ist nicht definiert');
+  // Wir stellen sicher, dass die neue meetingPhrases-Struktur geladen ist
+  if (typeof window.meetingPhrases === 'undefined') {
+    console.warn('meetingPhrases ist nicht definiert');
   }
 });
 
@@ -94,6 +91,9 @@ function setup() {
   
   // Initial setup of chat display
   setTimeout(updateChatDisplay, 500); // Small delay to ensure DOM is ready
+  
+  // Force a reset after a delay to ensure size changes are applied
+  setTimeout(resetAnimation, 1000);
 }
 
 // Create chairs positioned around the meeting table
@@ -102,28 +102,28 @@ function createChairs() {
   for (let i = 0; i < 3; i++) {
     let x = table.x - table.width * 0.3 + i * table.width * 0.3;
     let y = table.y - table.height * 0.7;
-    chairs.push({ x, y, width: 40, height: 40 });
+    chairs.push({ x, y, width: 70, height: 70 });
   }
   
   // Bottom side of table
   for (let i = 0; i < 3; i++) {
     let x = table.x - table.width * 0.3 + i * table.width * 0.3;
     let y = table.y + table.height * 0.7;
-    chairs.push({ x, y, width: 40, height: 40 });
+    chairs.push({ x, y, width: 70, height: 70 });
   }
   
   // Left side of table
   for (let i = 0; i < 2; i++) {
     let x = table.x - table.width * 0.7;
     let y = table.y - table.height * 0.2 + i * table.height * 0.4;
-    chairs.push({ x, y, width: 40, height: 40 });
+    chairs.push({ x, y, width: 70, height: 70 });
   }
   
   // Right side of table
   for (let i = 0; i < 2; i++) {
     let x = table.x + table.width * 0.7;
     let y = table.y - table.height * 0.2 + i * table.height * 0.4;
-    chairs.push({ x, y, width: 40, height: 40 });
+    chairs.push({ x, y, width: 70, height: 70 });
   }
 }
 
@@ -168,7 +168,7 @@ function createParticipants() {
       y: chair.y,
       baseX: chair.x,
       baseY: chair.y,
-      size: appearance.size || 35,
+      size: appearance.size || 90, // Dramatically increased from 60 to 90
       color: appearance.color || PARTICIPANT_COLORS[colorIndex],
       speedX: random(-0.5, 0.5),
       speedY: random(-0.5, 0.5),
@@ -388,6 +388,11 @@ function draw() {
   fill(CHAIR_COLOR);
   for (let chair of chairs) {
     rect(chair.x, chair.y, chair.width, chair.height, 5);
+  }
+  
+  // Log participant sizes for debugging
+  if (frameCount % 60 === 0 && participants.length > 0) {
+    console.log("Participant sizes:", participants.map(p => p.size));
   }
   
   // Check if heated discussion should end
@@ -842,15 +847,20 @@ function drawParticipant(p) {
   if (p.type === 'genZAzubi') {
     // Draw headphones if they have them
     if (appearance.extras.hasHeadphones) {
+      // Fix headphone positioning to be on top of the head
       stroke(appearance.extras.headphoneColor);
-      strokeWeight(3);
+      strokeWeight(4); // Slightly thicker for better visibility
       noFill();
-      arc(p.x, p.y, p.size * 1.1, p.size * 1.1, PI * 0.1, PI * 0.9);
-      // Headphone ear pieces
+      
+      // Draw headphone band across top of head (correctly oriented)
+      arc(p.x, p.y, p.size * 1.2, p.size * 1.2, PI, TWO_PI);
+      
+      // Headphone ear pieces - larger and correctly positioned
       fill(appearance.extras.headphoneColor);
       noStroke();
-      ellipse(p.x - p.size/2 * 0.95, p.y, 8, 10);
-      ellipse(p.x + p.size/2 * 0.95, p.y, 8, 10);
+      // Position ear pieces on sides of head
+      ellipse(p.x - p.size/2 * 0.95, p.y, 14, 16);
+      ellipse(p.x + p.size/2 * 0.95, p.y, 14, 16);
     }
     
     // Draw hat/beanie
@@ -866,11 +876,11 @@ function drawParticipant(p) {
   // If the character has glasses
   if (p.type === 'genZAzubi' && appearance.extras.hasGlasses) {
     stroke(appearance.extras.glassesColor);
-    strokeWeight(1.5);
+    strokeWeight(2); // Slightly thicker for better visibility
     noFill();
-    // Draw glasses
-    ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, 10, 10);
-    ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, 10, 10);
+    // Draw glasses - scaled with participant size
+    ellipse(p.x - p.size * 0.2, p.y - p.size * 0.1, p.size * 0.3, p.size * 0.3);
+    ellipse(p.x + p.size * 0.2, p.y - p.size * 0.1, p.size * 0.3, p.size * 0.3);
     // Bridge of glasses
     line(p.x - p.size * 0.15, p.y - p.size * 0.1, p.x + p.size * 0.15, p.y - p.size * 0.1);
     noStroke();
@@ -1023,45 +1033,60 @@ function createSpeechBubble(participant) {
   // Wähle die Phrase basierend auf dem Charakter-Typ und Schrei-Status
   if (isShouting) {
     // Schrei-Phrasen
-    let shoutOptions = GENERAL_PHRASES.filter(phrase => phrase.length < 50);
+    let shoutPhrases;
     
     // Wenn es ein GenZ-Azubi ist, verwende GenZ-Phrasen
     if (characterType === 'genZAzubi') {
-      shoutOptions = GEN_Z_PHRASES;
+      shoutPhrases = meetingPhrases.genZ.shouting;
+    } else {
+      // Filtere kurze Phrasen für bessere Lesbarkeit
+      shoutPhrases = meetingPhrases.general.shouting;
     }
     
     // Wähle eine zufällige Phrase
-    text = shoutOptions[Math.floor(random() * shoutOptions.length)];
+    text = shoutPhrases[Math.floor(random() * shoutPhrases.length)];
     
-    // Formatiere den Text für Schreien (GROSSBUCHSTABEN und Ausrufezeichen)
-    text = text.toUpperCase();
+    // Formatiere den Text für Schreien (wenn nicht bereits in Großbuchstaben)
+    if (text !== text.toUpperCase()) {
+      text = text.toUpperCase();
+    }
     
-    // Füge 1-3 Ausrufezeichen hinzu
-    const exclamationCount = Math.floor(random() * 3) + 1;
-    text += '!'.repeat(exclamationCount);
+    // Füge 1-3 Ausrufezeichen hinzu, wenn nicht bereits vorhanden
+    if (!text.endsWith('!')) {
+      const exclamationCount = Math.floor(random() * 3) + 1;
+      text += '!'.repeat(exclamationCount);
+    }
     
   } else {
     // Normale Sprache (nicht schreien)
     // Wähle abhängig vom Charakter-Typ
     if (characterType === 'genZAzubi' && random() < 0.8) {
       // GenZ-Azubi hat 80% Chance, GenZ-Phrasen zu verwenden
-      text = GEN_Z_PHRASES[Math.floor(random() * GEN_Z_PHRASES.length)];
+      const phrases = meetingPhrases.genZ.normal;
+      text = phrases[Math.floor(random() * phrases.length)];
     } else {
       // Andere Charaktere verwenden allgemeine Phrasen
-      text = GENERAL_PHRASES[Math.floor(random() * GENERAL_PHRASES.length)];
+      const phrases = meetingPhrases.general.normal;
+      text = phrases[Math.floor(random() * phrases.length)];
     }
   }
+  
+  // Hole den Namen des Teilnehmers
+  const participantName = participant.name || "Teilnehmer";
   
   // Erstelle die Sprechblase
   return {
     participantIndex: participantIndex,
     text: text,
+    content: text,  // Dupliziere für Konsistenz mit anderen Stellen im Code
+    participantName: participantName, // Füge den Namen hinzu
     x: participant.x,
     y: participant.y - participant.size - 30,
     createdAt: millis(),
     duration: isShouting ? 5000 : 4000, // Schreien ist länger sichtbar
     isShouting: isShouting,
-    alpha: 0 // Startet mit Fade-in
+    alpha: 0, // Startet mit Fade-in
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
 }
 
@@ -1117,7 +1142,11 @@ function consumeRandomItem(participantIndex) {
   // Add to chat history
   const chatMessage = {
     participant: p,
+    participantIndex: participantIndex,
     message: text,
+    text: text,
+    content: text,
+    name: participant.name || "Teilnehmer",
     isShouting: selectedItem.type === 'koks',
     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
@@ -1395,9 +1424,12 @@ function updateChatDisplay() {
     const chatElement = document.createElement('div');
     chatElement.classList.add('chat-message');
     
-    // Shouting-Stil für Nachrichten in Großbuchstaben mit Ausrufezeichen
-    if (message.content && (message.content === message.content.toUpperCase() && 
-        message.content.includes('!') && message.content.length > 3)) {
+    // Bestimme, ob es sich um eine Shout-Nachricht handelt
+    const isShouting = message.isShouting || 
+                      (message.message && message.message === message.message.toUpperCase() && 
+                       message.message.includes('!'));
+    
+    if (isShouting) {
       chatElement.classList.add('shouting');
     }
     
@@ -1405,13 +1437,26 @@ function updateChatDisplay() {
     const headerDiv = document.createElement('div');
     headerDiv.classList.add('chat-header');
     
+    // Ermittle den Namen des Teilnehmers
+    let participantName = "Unbekannt";
+    if (message.participant) {
+      participantName = message.participant.name || "Teilnehmer";
+    } else if (typeof message.participantIndex === 'number' && 
+               participants[message.participantIndex]) {
+      participantName = participants[message.participantIndex].name || "Teilnehmer";
+    }
+    
     const nameSpan = document.createElement('span');
     nameSpan.classList.add('chat-name');
-    nameSpan.textContent = message.name || "Unbekannt";
+    nameSpan.textContent = participantName;
+    
+    // Ermittle die Zeit
+    const timeString = message.timestamp || message.time || 
+                      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
     const timeSpan = document.createElement('span');
     timeSpan.classList.add('chat-time');
-    timeSpan.textContent = message.time || "";
+    timeSpan.textContent = timeString;
     
     headerDiv.appendChild(nameSpan);
     headerDiv.appendChild(document.createTextNode(' '));
@@ -1420,7 +1465,10 @@ function updateChatDisplay() {
     // Nachrichtentext in der zweiten Zeile
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('chat-content');
-    contentDiv.textContent = message.content || message.text || "";
+    
+    // Verwende den richtigen Text aus message.content oder message.text oder message.message
+    const messageText = message.content || message.text || message.message || "";
+    contentDiv.textContent = messageText;
     
     // Alles zusammenfügen
     chatElement.appendChild(headerDiv);
@@ -1449,9 +1497,14 @@ function updateSpeechBubbles() {
       // Füge Nachricht auch zum Chat hinzu
       const chatMessage = {
         participant: participant,
+        participantIndex: newBubble.participantIndex,
         message: newBubble.text,
+        text: newBubble.text,
+        content: newBubble.text,
+        name: participant.name || "Teilnehmer",
         isShouting: newBubble.isShouting,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
       chatMessages.push(chatMessage);
@@ -1489,11 +1542,36 @@ function drawSpeechBubble(speechBubble) {
   speechBubble.x = participant.x;
   speechBubble.y = participant.y - participant.size - 30;
   
+  // Bestimme den Text aus der richtigen Eigenschaft
+  const bubbleText = speechBubble.text || speechBubble.content || "";
+  if (!bubbleText) return false;
+  
   // Berechne Größe basierend auf dem Text
   textSize(14);
-  const bubbleTextWidth = min(200, textWidth(speechBubble.text) + 20);
-  const lines = ceil(bubbleTextWidth / 200);
-  const textHeight = lines * 20 + 10;
+  const bubbleWidth = min(300, textWidth(bubbleText) + 40); // Erhöhe die maximale Breite von 200 auf 300
+  
+  // Berechne die Anzahl der Zeilen basierend auf der Textbreite
+  const words = bubbleText.split(' ');
+  let line = '';
+  let lineCount = 1;
+  const maxLineWidth = bubbleWidth - 20; // Berücksichtige Padding
+  
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
+    const testWidth = textWidth(testLine);
+    
+    if (testWidth > maxLineWidth) {
+      line = words[i] + ' ';
+      lineCount++;
+    } else {
+      line = testLine;
+    }
+  }
+  
+  // Berechne Höhe basierend auf Zeilenanzahl
+  const lineHeight = speechBubble.isShouting ? 20 : 18;
+  const textHeight = lineCount * lineHeight;
+  const bubbleHeight = textHeight + 20; // Füge Padding hinzu
   
   push();
   translate(speechBubble.x, speechBubble.y);
@@ -1512,13 +1590,13 @@ function drawSpeechBubble(speechBubble) {
   }
   
   // Zeichne die Sprechblase
-  ellipse(0, 0, bubbleTextWidth + 20, textHeight + 10);
+  ellipse(0, 0, bubbleWidth, bubbleHeight);
   
   // Spitze der Sprechblase
   triangle(
-    -10, textHeight/2,
-    10, textHeight/2,
-    0, textHeight/2 + 15
+    -10, bubbleHeight/2,
+    10, bubbleHeight/2,
+    0, bubbleHeight/2 + 15
   );
   
   // Text
@@ -1532,7 +1610,7 @@ function drawSpeechBubble(speechBubble) {
   
   textAlign(CENTER, CENTER);
   textSize(speechBubble.isShouting ? 16 : 14);
-  text(speechBubble.text, 0, 0, bubbleTextWidth, textHeight);
+  text(bubbleText, 0, 0, bubbleWidth - 20, bubbleHeight - 10);
   
   pop();
   return true;
@@ -1543,25 +1621,8 @@ function windowResized() {
   let container = document.getElementById('meeting-animation');
   resizeCanvas(container.offsetWidth, container.offsetHeight);
   
-  // Recalculate table position and size
-  table.x = width / 2;
-  table.y = height / 2;
-  table.width = width * 0.6;
-  table.height = height * 0.4;
-  
-  // Reposition chairs and participants
-  chairs = [];
-  createChairs();
-  
-  for (let i = 0; i < participants.length; i++) {
-    if (i < chairs.length) {
-      participants[i].baseX = chairs[i].x;
-      participants[i].baseY = chairs[i].y;
-    }
-  }
-  
-  // Recreate table decorations for new table size
-  createTableDecorations();
+  // Reset the entire animation to apply new sizes
+  resetAnimation();
 }
 
 function startDiscussion() {
@@ -1582,9 +1643,14 @@ function startDiscussion() {
     // Füge Nachricht auch zum Chat hinzu
     const chatMessage = {
       participant: speaker,
+      participantIndex: speakerIndex,
       message: newBubble.text,
+      text: newBubble.text,
+      content: newBubble.text,
+      name: speaker.name || "Teilnehmer",
       isShouting: newBubble.isShouting,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     
     chatMessages.push(chatMessage);
@@ -1669,3 +1735,52 @@ function displayChatMessage(text) {
   // Chat-Anzeige aktualisieren
   updateChatDisplay();
 }
+
+// Function to completely reset the animation with new sizes
+function resetAnimation() {
+  // Clear existing elements
+  participants = [];
+  chairs = [];
+  speechBubbles = [];
+  tableDecorations = [];
+  
+  // Set up the animation again
+  let container = document.getElementById('meeting-animation');
+  resizeCanvas(container.offsetWidth, container.offsetHeight);
+  
+  // Recreate table with appropriate size
+  let tableWidth = width * 0.6;
+  let tableHeight = height * 0.4;
+  table = {
+    x: width / 2,
+    y: height / 2,
+    width: tableWidth,
+    height: tableHeight
+  };
+  
+  // Recreate all elements
+  createChairs();
+  createParticipants();
+  createTableDecorations();
+  createWaitress();
+  
+  // Reset animation state
+  isHeatedDiscussion = false;
+  lastConsumptionTime = millis();
+  lastRefillTime = millis();
+  
+  // Update the chat display
+  updateChatDisplay();
+}
+
+// Add an exposed global function to reset the animation (accessible from browser console)
+window.resetMeetingAnimation = function() {
+  console.log("Resetting animation with new participant sizes...");
+  resetAnimation();
+};
+
+// Call reset after 2 seconds to ensure the animation is fully loaded
+setTimeout(() => {
+  console.log("Auto-resetting animation for size change...");
+  resetAnimation();
+}, 2000);

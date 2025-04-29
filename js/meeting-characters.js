@@ -33,7 +33,7 @@ const characterPresets = {
     phraseProbability: 0.6,
     participantPhraseIndex: 0,
     nameCategory: "traditional",
-    namePrefix: "Herr/Frau"
+    namePrefix: null
   },
   
   // Character that shouts a lot
@@ -42,7 +42,7 @@ const characterPresets = {
     phraseProbability: 0.8,
     participantPhraseIndex: 1,
     nameCategory: "traditional",
-    namePrefix: "Herr/Frau"
+    namePrefix: null
   },
   
   // Quiet character that rarely speaks
@@ -51,7 +51,7 @@ const characterPresets = {
     phraseProbability: 0.3,
     participantPhraseIndex: 2,
     nameCategory: "traditional",
-    namePrefix: "Herr/Frau"
+    namePrefix: null
   },
   
   // Manager character with specific phrases
@@ -60,7 +60,7 @@ const characterPresets = {
     phraseProbability: 0.7,
     participantPhraseIndex: 3,
     nameCategory: "traditional",
-    namePrefix: "Herr/Frau Dr."
+    namePrefix: null
   },
   
   // HR representative with their own phrases
@@ -69,7 +69,7 @@ const characterPresets = {
     phraseProbability: 0.65,
     participantPhraseIndex: 4,
     nameCategory: "modern",
-    namePrefix: "Herr/Frau"
+    namePrefix: null
   },
   
   // Finance department representative
@@ -78,7 +78,7 @@ const characterPresets = {
     phraseProbability: 0.7,
     participantPhraseIndex: 5,
     nameCategory: "traditional",
-    namePrefix: "Herr/Frau"
+    namePrefix: null
   },
   
   // IT representative with tech jargon
@@ -96,7 +96,7 @@ const characterPresets = {
     phraseProbability: 0.9,
     participantPhraseIndex: 7,
     nameCategory: "traditional",
-    namePrefix: "Herr/Frau"
+    namePrefix: null
   },
   
   // Works council secretary
@@ -105,7 +105,7 @@ const characterPresets = {
     phraseProbability: 0.8,
     participantPhraseIndex: 8,
     nameCategory: "traditional",
-    namePrefix: "Herr/Frau"
+    namePrefix: null
   },
   
   // Employee representative
@@ -127,68 +127,77 @@ const characterPresets = {
   }
 };
 
-// Base appearance for characters including color and size
-const characterBase = {
-  size: 20,
-  color: '#4287f5'
+// Define Gen-Z character appearance
+const genZAzubiAppearance = {
+  size: 55,
+  color: '#00ffcc', // Teal/turquoise color
+  extras: {
+    hatColor: '#9966ff', // Purple beanie/hat
+    hasHeadphones: true,
+    headphoneColor: '#ff33cc', // Pink headphones
+    hasGlasses: Math.random() > 0.6,
+    glassesColor: '#333333'
+  }
 };
 
-// Define different character appearances 
+// Base appearance for characters
+const BASE_APPEARANCE = {
+  size: 50,
+  color: '#FFD580', // Light orange/peach color
+  extras: {}
+};
+
+// Define appearances for different character types
 const characterAppearances = {
   regular: {
-    ...characterBase,
-    color: '#4287f5'
+    ...BASE_APPEARANCE
   },
   loudmouth: {
-    ...characterBase,
-    color: '#f54242',
-    size: 22
+    ...BASE_APPEARANCE,
+    size: 55,
+    color: '#FF6347' // Tomato color
   },
   quiet: {
-    ...characterBase,
-    color: '#42f5a7',
-    size: 18
+    ...BASE_APPEARANCE,
+    size: 45,
+    color: '#E6E6FA' // Lavender color
   },
   manager: {
-    ...characterBase,
-    color: '#f5a742',
-    size: 21
+    ...BASE_APPEARANCE,
+    size: 52,
+    color: '#4682B4' // Steel blue
   },
   hr: {
-    ...characterBase,
-    color: '#f542f2',
-    size: 20
+    ...BASE_APPEARANCE,
+    size: 48,
+    color: '#FFC0CB' // Pink
   },
   finance: {
-    ...characterBase,
-    color: '#42f5f5',
-    size: 20
+    ...BASE_APPEARANCE,
+    size: 50,
+    color: '#90EE90' // Light green
   },
   it: {
-    ...characterBase,
-    color: '#a742f5',
-    size: 20
+    ...BASE_APPEARANCE,
+    size: 48,
+    color: '#778899' // Light slate gray
   },
   chair: {
-    ...characterBase,
-    color: '#f54291',
-    size: 23
+    ...BASE_APPEARANCE,
+    size: 52,
+    color: '#FF8C00' // Dark orange
   },
   secretary: {
-    ...characterBase,
-    color: '#42aaf5',
-    size: 20
+    ...BASE_APPEARANCE,
+    size: 48,
+    color: '#BA55D3' // Medium orchid
   },
   employee: {
-    ...characterBase,
-    color: '#42f552',
-    size: 19
+    ...BASE_APPEARANCE,
+    size: 50,
+    color: '#20B2AA' // Light sea green
   },
-  genZAzubi: {
-    ...characterBase,
-    color: '#00ffcc', // Teal/turquoise color (popular among Gen Z)
-    size: 18
-  }
+  genZAzubi: genZAzubiAppearance
 };
 
 // Funktion zum Abrufen eines zufälligen Namens für einen Charakter
@@ -207,14 +216,6 @@ function getRandomCharacterName(characterType) {
   
   const randomIndex = Math.floor(Math.random() * nameList.length);
   const name = nameList[randomIndex];
-  
-  // Wenn ein Präfix vorhanden ist, zufällig bestimmen, ob es "Herr" oder "Frau" sein soll
-  // und dem Namen voranstellen
-  if (preset.namePrefix) {
-    const isMale = Math.random() > 0.5;
-    const prefix = preset.namePrefix.replace("Herr/Frau", isMale ? "Herr" : "Frau");
-    return `${prefix} ${name}`;
-  }
   
   return name;
 } 
