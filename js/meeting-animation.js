@@ -1146,7 +1146,7 @@ function consumeRandomItem(participantIndex) {
     message: text,
     text: text,
     content: text,
-    name: participant.name || "Teilnehmer",
+    name: p.name || "Teilnehmer",
     isShouting: selectedItem.type === 'koks',
     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
