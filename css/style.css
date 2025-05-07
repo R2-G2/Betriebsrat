@@ -5,6 +5,13 @@
     --text-color: #333;
     --card-bg: #fff;
     --shadow-color: rgba(0, 0, 0, 0.1);
+    --chat-bg: #f5f5f5;
+    --chat-border: #ccc;
+    --chat-shouting-bg: #fff0f0;
+    --chat-shouting-border: #ff6b6b;
+    --chat-name-color: #2c3e50;
+    --chat-time-color: #7f8c8d;
+    --chat-shouting-name: #c0392b;
 }
 
 .dark-theme {
@@ -14,6 +21,13 @@
     --text-color: #f8f9fa;
     --card-bg: #333;
     --shadow-color: rgba(0, 0, 0, 0.3);
+    --chat-bg: #3a3a3a;
+    --chat-border: #555;
+    --chat-shouting-bg: #502020;
+    --chat-shouting-border: #aa3939;
+    --chat-name-color: #81a4cd;
+    --chat-time-color: #aaa;
+    --chat-shouting-name: #e57373;
 }
 
 * {
@@ -181,38 +195,35 @@ footer {
 }
 
 .chat-message {
-    padding: 8px 12px;
-    border-radius: 15px;
-    max-width: 85%;
-    word-break: break-word;
-    position: relative;
-    animation: fadeIn 0.3s ease;
+    margin-bottom: 12px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: var(--chat-bg);
+    border-left: 3px solid var(--chat-border);
+    color: var(--text-color);
 }
 
 .chat-message.shouting {
-    background-color: #ffdddd;
-    color: #d33;
-    font-weight: bold;
-    align-self: flex-end;
-    border-bottom-right-radius: 2px;
+    background-color: var(--chat-shouting-bg);
+    border-left: 3px solid var(--chat-shouting-border);
 }
 
 .chat-message.normal {
-    background-color: #e8f4ff;
-    color: #333;
+    background-color: var(--chat-bg);
+    color: var(--text-color);
     align-self: flex-start;
     border-bottom-left-radius: 2px;
 }
 
 .chat-message.new-topic {
-    background-color: #fff9e0;
-    color: #8a6d3b;
+    background-color: var(--chat-shouting-bg);
+    color: var(--text-color);
     font-weight: bold;
     align-self: center;
     border-radius: 4px;
     width: 90%;
     text-align: center;
-    border: 1px dashed #ffd180;
+    border: 1px dashed var(--chat-shouting-border);
 }
 
 .chat-participant {
@@ -222,9 +233,34 @@ footer {
 }
 
 .chat-time {
-    font-size: 0.7rem;
-    color: #888;
-    margin-top: 3px;
+    color: var(--chat-time-color);
+    font-size: 0.9em;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 0.85em;
+}
+
+.chat-name {
+    font-weight: bold;
+    color: var(--chat-name-color);
+}
+
+.chat-content {
+    word-break: break-word;
+    line-height: 1.4;
+    color: var(--text-color);
+}
+
+.chat-message.shouting .chat-name {
+    color: var(--chat-shouting-name);
+}
+
+.chat-message.shouting .chat-content {
+    font-weight: bold;
 }
 
 @keyframes fadeIn {
