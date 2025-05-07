@@ -2,6 +2,7 @@
 // Edit this file to customize the topics discussed in the meeting
 
 const meetingTopics = [
+  // Alle Themen in einer flachen Liste ohne Kategorisierung
   "Neue Arbeitszeiten",
   "Urlaubsanträge",
   "Kantinenangebot",
@@ -53,7 +54,6 @@ const meetingTopics = [
   "Vergünstigte ÖPNV-Tickets",
   "Betriebsrad statt Firmenwagen",
   "Ergonomische Büromöbel für alle",
-  // Neue Themen zu Firmenwagen und Parkplätzen
   "Elektro-Firmenwagen für Führungskräfte",
   "Firmenwagen-Richtlinien überarbeiten",
   "CO2-Ausgleich für Dienstfahrzeuge",
@@ -70,7 +70,6 @@ const meetingTopics = [
   "Parksituation am Standort verbessern",
   "Parkplatz-Management-System implementieren",
   "Parkraumbewirtschaftung optimieren",
-  // Gen-Z Azubi Themen
   "TikTok-Präsenz der Firma aufbauen",
   "Vier-Tage-Woche für Azubis testen",
   "Mikro-Learning-Plattform einführen",
@@ -91,7 +90,6 @@ const meetingTopics = [
   "Klimaneutrale Ausbildung zertifizieren",
   "Azubi-Botschafter:innen für Schulen",
   "Digital Detox Workshops",
-  // Apple/MacOS Kritik-Themen
   "Umstieg von MacOS auf Linux für Entwicklungsteams",
   "Kostenanalyse: Apple vs. Windows/Linux-Workstations",
   "Performance-Benchmarks: MacOS vs. Alternative Betriebssysteme",
