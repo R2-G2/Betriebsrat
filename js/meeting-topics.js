@@ -109,7 +109,29 @@ const meetingTopics = [
   "Virtuelle Entwicklungsumgebungen statt physischer MacOS-Geräte",
   "Schulung für Windows/Linux als Entwicklerplattform",
   "Apple-Reparaturkosten vs. PC-Hardware-Wartung",
-  "BYOD-Policy: Keine Unterstützung mehr für Apple-Geräte"
+  "BYOD-Policy: Keine Unterstützung mehr für Apple-Geräte",
+  
+  // Neue Themen zu Cursor und KI
+  "Cursor-Alternativen für professionelle Entwicklung",
+  "Produktivitätsverluste durch Cursor-Instabilität messen",
+  "Lizenzkosten für vollwertige IDEs vs. Cursor",
+  "KI-gestützter Code: Wem gehören die Rechte?",
+  "Halluzinierende KI-Assistenten: Ein Risiko für den Quellcode?",
+  "Mitarbeiterschulung: Wie erkenne ich KI-generierten Unsinn?",
+  "Prompt-Engineering als neue Kernkompetenz?",
+  "KI-induzierte technische Schulden bekämpfen",
+  "Cursor-freie Zonen für konzentriertes Arbeiten",
+  "Versicherung gegen KI-verursachte Softwarefehler",
+  "Einflussmessung von ChatGPT auf Architekturdegradation",
+  "Cursor-Token-Budget: Wer darf wie viel KI nutzen?",
+  "KI-Ethik-Richtlinien für Entwicklungsteams",
+  "Umstieg von Cursor auf professionelle Entwicklungsumgebungen",
+  "Wann wird die KI uns Entwickler ersetzen?",
+  "Datenschutzprobleme durch Code-Uploads an KI-Provider",
+  "KI als Co-Pilot oder als Rücksitzfahrer?",
+  "Cursor-Abstürze als Burnout-Faktor",
+  "Prompt-Writing als Jobprofil für Software-Entwickler",
+  "Richtlinie: Kein KI-generierter Code in der Produktion"
 ];
 
 // Custom event to signal that a new topic has been added
