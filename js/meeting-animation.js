@@ -1030,9 +1030,19 @@ function createSpeechBubble(participant) {
   // Bestimme, ob geschrien wird
   isShouting = random() < effectiveShoutProbability;
   
-  // Wähle die Phrase basierend auf dem Charakter-Typ und Schrei-Status
-  if (isShouting) {
-    // Schrei-Phrasen
+  // 25% Chance für Apple/MacOS-Kritik-Phrasen
+  const useAppleCriticism = random() < 0.25;
+  
+  // Wähle die Phrase basierend auf dem Charakter-Typ, Schrei-Status und Thema
+  if (useAppleCriticism) {
+    // Apple-Kritik Phrasen
+    const phrases = isShouting ? 
+      meetingPhrases.appleCriticism.shouting : 
+      meetingPhrases.appleCriticism.normal;
+    
+    text = phrases[Math.floor(random() * phrases.length)];
+  } else if (isShouting) {
+    // Normale Schrei-Phrasen (nicht Apple-bezogen)
     let shoutPhrases;
     
     // Wenn es ein GenZ-Azubi ist, verwende GenZ-Phrasen
@@ -1056,7 +1066,6 @@ function createSpeechBubble(participant) {
       const exclamationCount = Math.floor(random() * 3) + 1;
       text += '!'.repeat(exclamationCount);
     }
-    
   } else {
     // Normale Sprache (nicht schreien)
     // Wähle abhängig vom Charakter-Typ
